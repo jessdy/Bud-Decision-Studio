@@ -5,8 +5,8 @@
 import { api, refresh, registry, store } from './store.js';
 import { $, $$, esc, fmtBytes, fmtGB, icon, toast } from './util.js';
 
-const READS = { text: 'text', image: 'images', audio: 'audio', video: 'video' };
-const list = (xs) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
+const READS = { text: '文本', image: '图像', audio: '音频', video: '视频' };
+const list = (xs) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join('、')}和${xs[xs.length - 1]}`);
 
 // Two models to start with, picked for the hardware: one small encoder that answers instantly, and one capable
 // model sized to the device. Only models that fit are suggested.
@@ -41,21 +41,21 @@ export async function openChooser({ firstRun = false } = {}) {
   const d = document.createElement('dialog');
   d.className = 'chooser';
   d.setAttribute('aria-labelledby', 'chtitle');
-  const where = rt.device === 'cpu' ? `the processor (${esc(rt.device_name)})` : esc(rt.device_name || st.system.gpu_name);
+  const where = rt.device === 'cpu' ? `处理器（${esc(rt.device_name)}）` : esc(rt.device_name || st.system.gpu_name);
 
   const rows = () => st.models.slice().sort((a, b) => (rec.has(b.id) - rec.has(a.id)) || (a.download_bytes - b.download_bytes)).map((m) => {
     const r = reg.models[m.id] || {};
     const mk = reg.makers[r.maker_id] || {};
     const src = mk.avatar || r.logo || mk.logo;
     const have = m.downloaded, inq = queued.has(m.id), blocked = !m.fit?.ok;
-    const state = have ? '<span class="chip ok">On this computer</span>' : inq ? '<span class="chip violet">In the queue</span>'
+    const state = have ? '<span class="chip ok">本机已有</span>' : inq ? '<span class="chip violet">队列中</span>'
       : blocked ? `<span class="chip">${esc(m.fit.reason.split('.')[0])}</span>` : `<span class="c num">${fmtBytes(m.download.remaining || m.download_bytes)}</span>`;
     const on = have || inq || pick.has(m.id);
     return `<label class="ch-row ${blocked && !have ? 'blocked' : ''}">
       <input type="checkbox" data-id="${m.id}" ${on ? 'checked' : ''} ${have || inq || (blocked && !have) ? 'disabled' : ''}>
       <span class="logo">${src ? `<img src="/ui/${esc(src)}" alt="">` : icon('cube')}</span>
-      <span class="nm"><b>${esc(m.name)}${rec.has(m.id) ? '<span class="chip violet">Recommended</span>' : ''}</b>
-        <span class="tag">${esc(m.tagline)}</span><span class="meta">Reads ${list(m.modalities.map((k) => READS[k]))}. ${esc(m.params)} parameters.</span></span>
+      <span class="nm"><b>${esc(m.name)}${rec.has(m.id) ? '<span class="chip violet">推荐</span>' : ''}</b>
+        <span class="tag">${esc(m.tagline)}</span><span class="meta">支持 ${list(m.modalities.map((k) => READS[k]))}。${esc(m.params)} 参数。</span></span>
       <span class="st">${state}</span></label>`;
   }).join('');
 
@@ -65,22 +65,22 @@ export async function openChooser({ firstRun = false } = {}) {
     const free = (st.system.disk_free_gb || 0) * 1e9;
     const tooBig = free && bytes > free * 0.95;
     $('#chsum', d).innerHTML = chosen.length
-      ? `${chosen.length} ${chosen.length === 1 ? 'model' : 'models'}, <b>${fmtBytes(bytes)}</b>. ${tooBig ? `<span class="warn">Only ${fmtGB(st.system.disk_free_gb)} free on this computer.</span>` : `${fmtGB(st.system.disk_free_gb)} free on this computer.`}`
-      : 'Tick the models you want.';
+      ? `已选 ${chosen.length} 个模型，<b>${fmtBytes(bytes)}</b>。${tooBig ? `<span class="warn">本机仅剩 ${fmtGB(st.system.disk_free_gb)} 可用空间。</span>` : `本机可用 ${fmtGB(st.system.disk_free_gb)}。`}`
+      : '请勾选要下载的模型。';
     const go = $('#chgo', d);
     go.disabled = !chosen.length || tooBig;
-    go.innerHTML = `${icon('cloud-arrow-down')}${chosen.length ? `Download ${chosen.length === 1 ? chosen[0].name : `${chosen.length} models`}` : 'Download'}`;
+    go.innerHTML = `${icon('cloud-arrow-down')}${chosen.length ? `下载${chosen.length === 1 ? chosen[0].name : `${chosen.length} 个模型`}` : '下载'}`;
   };
 
   d.innerHTML = `<div class="ch-head">
-      <h2 id="chtitle">${firstRun ? 'Choose models to download' : 'Download models'}</h2>
-      <p>Models run on ${where}. Pick the ones you want; they download one at a time, smallest first, and keep going in the background while you work. You can add or remove models later on the Models page.</p>
-      <div class="ch-presets" role="group" aria-label="Quick selection"><span class="small muted">Select</span>
-        <button type="button" class="btn btn-plain sm" data-preset="rec">Recommended</button><button type="button" class="btn btn-plain sm" data-preset="fit">Everything that fits</button><button type="button" class="btn btn-plain sm" data-preset="none">None</button></div>
+      <h2 id="chtitle">${firstRun ? '选择要下载的模型' : '下载模型'}</h2>
+      <p>模型将在 ${where} 上运行。勾选你需要的模型；它们会逐个下载（优先较小的），并在后台持续进行。之后可在模型页添加或移除。</p>
+      <div class="ch-presets" role="group" aria-label="快速选择"><span class="small muted">选择</span>
+        <button type="button" class="btn btn-plain sm" data-preset="rec">推荐</button><button type="button" class="btn btn-plain sm" data-preset="fit">本机可装全部</button><button type="button" class="btn btn-plain sm" data-preset="none">全不选</button></div>
     </div>
     <div class="ch-list" id="chlist">${rows()}</div>
     <div class="ch-foot"><span id="chsum" class="small"></span>
-      <button class="btn" id="chlater">${firstRun ? 'Not now' : 'Cancel'}</button><button class="btn btn-primary" id="chgo"></button></div>`;
+      <button class="btn" id="chlater">${firstRun ? '暂不' : '取消'}</button><button class="btn btn-primary" id="chgo"></button></div>`;
   document.body.append(d);
 
   const sync = () => $$('input[data-id]', d).forEach((c) => { if (!c.disabled) c.checked = pick.has(c.dataset.id); });
@@ -100,10 +100,10 @@ export async function openChooser({ firstRun = false } = {}) {
   $('#chgo', d).addEventListener('click', async () => {
     const ids = [...pick].filter((id) => !queued.has(id) && !st.models.find((m) => m.id === id)?.downloaded);
     const go = $('#chgo', d);
-    go.disabled = true; go.textContent = 'Queuing';
+    go.disabled = true; go.textContent = '排队中';
     try {
       await api('/api/downloads', { method: 'POST', body: { models: ids } });
-      toast(ids.length === 1 ? 'Downloading now. It is ready to use as soon as it finishes.' : `${ids.length} models queued. The first is downloading now.`);
+      toast(ids.length === 1 ? '正在下载，完成后即可使用。' : `已排队 ${ids.length} 个模型，首个正在下载。`);
       refresh();
       d.close();
     } catch (e) { toast(e.message, 'error'); foot(); }

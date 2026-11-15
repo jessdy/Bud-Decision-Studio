@@ -167,6 +167,12 @@ def snapshot_dir(repo_id: str) -> Path | None:
 
 def repo_status(repo: Repo) -> dict:
     """{'complete': bool, 'have': bytes present, 'total': bytes expected, 'missing': [files]}"""
+    from . import local_models
+    local = local_models.path_for_repo(repo.id)
+    if local is not None:
+        size = local_models.dir_size(local)
+        total = size or int(repo.size_gb * 1e9)
+        return {"complete": True, "have": total, "partial": 0, "total": total, "missing": [], "local": str(local)}
     files = expected_files(repo)
     snap = snapshot_dir(repo.id)
     if files is None:  # never seen metadata: trust any existing snapshot with weights
@@ -231,7 +237,14 @@ def model_status(spec: ModelSpec) -> dict:
 
 
 def delete_model_files(spec: ModelSpec, downloaded_ids: set[str]) -> list[str]:
-    """Remove this model's repo, and its base only if no other downloaded model shares it. -> removed repo ids."""
+    """Remove this model's repo, and its base only if no other downloaded model shares it. -> removed repo ids.
+
+    Local bindings are cleared without deleting the user's folders.
+    """
+    from . import local_models
+    if local_models.get(spec.id):
+        local_models.clear(spec.id)
+        return [f"local:{r.id}" for r in spec.repos()]
     removed = []
     for r in spec.repos():
         shared = any(o.id != spec.id and o.id in downloaded_ids and r.id in [x.id for x in o.repos()] for o in CATALOG)

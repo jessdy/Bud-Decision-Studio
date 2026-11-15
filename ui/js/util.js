@@ -7,29 +7,29 @@ export const $ = (sel, root = document) => root.querySelector(sel);
 export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
 export function fmtBytes(b) {
-  if (b == null) return 'unknown';
+  if (b == null) return '未知';
   if (b >= 1e9) return `${(b / 1e9).toFixed(b >= 10e9 ? 1 : 2)} GB`;
   if (b >= 1e6) return `${Math.round(b / 1e6)} MB`;
   return `${Math.max(1, Math.round(b / 1e3))} KB`;
 }
-export const fmtGB = (g) => (g == null ? 'unknown' : `${g >= 10 ? g.toFixed(0) : g.toFixed(1)} GB`);
+export const fmtGB = (g) => (g == null ? '未知' : `${g >= 10 ? g.toFixed(0) : g.toFixed(1)} GB`);
 export function fmtPct(p, digits = 0) {
-  if (p == null || Number.isNaN(p)) return 'n/a';
+  if (p == null || Number.isNaN(p)) return '不可用';
   const v = p * 100;
   if (v > 0 && v < 1 && digits === 0) return '<1%';
   if (v < 100 && v > 99 && digits === 0) return '>99%';
   return `${v.toFixed(digits)}%`;
 }
 export function fmtMs(ms) {
-  if (ms == null) return 'n/a';
+  if (ms == null) return '不可用';
   if (ms < 1000) return `${Math.round(ms)} ms`;
   return `${(ms / 1000).toFixed(ms < 10000 ? 2 : 1)} s`;
 }
 export function fmtDuration(s) {
   if (s == null || !isFinite(s)) return '';
   if (s < 60) return `${Math.round(s)} s`;
-  if (s < 3600) return `${Math.round(s / 60)} min`;
-  return `${(s / 3600).toFixed(1)} h`;
+  if (s < 3600) return `${Math.round(s / 60)} 分钟`;
+  return `${(s / 3600).toFixed(1)} 小时`;
 }
 export function fmtNum(v, digits = 2) {
   if (v == null || Number.isNaN(+v)) return String(v ?? '');
@@ -40,17 +40,17 @@ export function fmtNum(v, digits = 2) {
 
 // Plain-language certainty for the top probability. The same four words appear everywhere in the studio.
 export function certainty(top) {
-  if (top >= 0.9) return { word: 'Very sure', tone: 'violet' };
-  if (top >= 0.75) return { word: 'Fairly sure', tone: 'violet' };
-  if (top >= 0.55) return { word: 'Leaning', tone: '' };
-  return { word: 'Unsure', tone: 'amber' };
+  if (top >= 0.9) return { word: '非常确定', tone: 'violet' };
+  if (top >= 0.75) return { word: '比较确定', tone: 'violet' };
+  if (top >= 0.55) return { word: '略有倾向', tone: '' };
+  return { word: '不确定', tone: 'amber' };
 }
 
 export const slug = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 32) || 'question';
 export function debounce(fn, ms = 250) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-export async function copy(text, label = 'Copied') {
+export async function copy(text, label = '已复制') {
   try { await navigator.clipboard.writeText(text); toast(label); }
   catch {
     // Clipboard API needs a secure context; fall back to a hidden textarea on plain http from another host.
@@ -58,7 +58,7 @@ export async function copy(text, label = 'Copied') {
     ta.style.cssText = 'position:fixed;opacity:0';
     document.body.append(ta); ta.select();
     const ok = document.execCommand('copy'); ta.remove();
-    toast(ok ? label : 'Copy failed. Select the text and copy it manually.', ok ? '' : 'error');
+    toast(ok ? label : '复制失败，请手动选择文本后复制。', ok ? '' : 'error');
   }
 }
 
@@ -120,23 +120,23 @@ export function initTips(glossary) {
 // Wrap a glossary term: term('calibration') or term('calibration', 'calibrated')
 export const term = (key, text) => `<span class="term" tabindex="0" data-term="${esc(key)}">${esc(text || key)}</span>`;
 
-export function confirmDialog({ title, body, confirm = 'Confirm', danger = false }) {
+export function confirmDialog({ title, body, confirm = '确认', danger = false }) {
   return new Promise((resolve) => {
     const d = document.createElement('dialog');
     d.innerHTML = `<form method="dialog"><div class="dialog-body"><h2 style="font-size:17px">${esc(title)}</h2><div class="muted">${body}</div></div>
-      <div class="dialog-foot"><button class="btn" value="cancel">Cancel</button><button class="btn ${danger ? 'btn-danger' : 'btn-primary'}" value="ok">${esc(confirm)}</button></div></form>`;
+      <div class="dialog-foot"><button class="btn" value="cancel">取消</button><button class="btn ${danger ? 'btn-danger' : 'btn-primary'}" value="ok">${esc(confirm)}</button></div></form>`;
     document.body.append(d);
     d.addEventListener('close', () => { resolve(d.returnValue === 'ok'); d.remove(); });
     d.showModal();
   });
 }
 
-export function askText({ title, label = '', value = '', pattern, confirm = 'Save' }) {
+export function askText({ title, label = '', value = '', pattern, confirm = '保存' }) {
   return new Promise((resolve) => {
     const d = document.createElement('dialog');
     d.innerHTML = `<form method="dialog"><div class="dialog-body"><h2 style="font-size:17px">${esc(title)}</h2>
       <label class="field"><span class="help">${esc(label)}</span><input class="input code" name="v" value="${esc(value)}" ${pattern ? `pattern="${esc(pattern)}" title="${esc(label)}"` : ''} required></label></div>
-      <div class="dialog-foot"><button class="btn" value="cancel" formnovalidate>Cancel</button><button class="btn btn-primary" value="ok">${esc(confirm)}</button></div></form>`;
+      <div class="dialog-foot"><button class="btn" value="cancel" formnovalidate>取消</button><button class="btn btn-primary" value="ok">${esc(confirm)}</button></div></form>`;
     document.body.append(d);
     const inp = d.querySelector('input');
     d.addEventListener('close', () => { resolve(d.returnValue === 'ok' ? inp.value.trim() : null); d.remove(); });

@@ -277,16 +277,24 @@ async def _http_error(request: Request, e: StarletteHTTPException):
 
 
 def model_view(spec) -> dict:
+    from . import custom_models, local_models
     st = model_status(spec)
     h = workers.handles.get(spec.id)
+    local = local_models.get(spec.id)
+    custom = custom_models.is_custom(spec.id)
     d = spec.to_dict()
+    if custom or str(spec.repo.id).startswith("local/"):
+        d["hf_url"] = ""
     d.update({
-        "likes": repo_likes(spec.repo),
+        "likes": repo_likes(spec.repo) if not custom else 0,
         "download_bytes": sum(repo_size(r) for r in spec.repos()),
         "base_bytes": repo_size(spec.base) if spec.base else 0,
         "downloaded": st["complete"],
         "download": {"have": st["have"], "partial": st["partial"], "total": st["total"], "remaining": st["remaining"]},
         "worker": h.public() if h else None,
+        "local": bool(local),
+        "local_paths": (local or {}).get("repos") or {},
+        "custom": custom,
     })
     return d
 
@@ -341,7 +349,10 @@ def _downloads() -> Downloader:
 
 @app.post("/api/models/{model_id}/download")
 def download(model_id: str):
-    _spec(model_id)
+    from . import custom_models
+    spec = _spec(model_id)
+    if custom_models.is_custom(model_id) or str(spec.repo.id).startswith("local/"):
+        raise HTTPException(400, "本机添加的模型无需下载，请直接加载。")
     _downloads().enqueue(model_id)
     return downloader.snapshot()
 
@@ -372,6 +383,9 @@ def cancel_download(model_id: str):
 
 @app.delete("/api/models/{model_id}/files")
 async def delete_files(model_id: str):
+    from . import custom_models
+    if custom_models.is_custom(model_id):
+        raise HTTPException(400, "本机添加的模型请用「从列表中移除」；不会删除你的权重文件夹。")
     spec = _spec(model_id)
     if model_id in workers.handles:
         await workers.stop(model_id)
@@ -380,6 +394,73 @@ async def delete_files(model_id: str):
     downloaded = {m.id for m in CATALOG if model_status(m)["complete"]}
     removed = delete_model_files(spec, downloaded)
     return {"removed": removed}
+
+
+@app.post("/api/models/{model_id}/local")
+def bind_local(model_id: str, body: dict = Body(...)):
+    """Register local weight folders for a catalog model so it can load without downloading."""
+    from . import custom_models, local_models
+    spec = _spec(model_id)
+    if getattr(spec, "finetune_dir", None):
+        raise HTTPException(400, "微调模型请用其基座型号绑定本地权重，或通过训练页导入。")
+    if custom_models.is_custom(model_id):
+        raise HTTPException(400, "本机添加的模型请在添加时选择目录；要更换请删除后重新添加。")
+    path = body.get("path")
+    base_path = body.get("base_path")
+    try:
+        entry = local_models.bind_model(spec, path, base_path)
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+    return {"ok": True, "model": model_id, "repos": entry.get("repos") or {}, "view": model_view(spec)}
+
+
+@app.delete("/api/models/{model_id}/local")
+def unbind_local(model_id: str):
+    """Forget a local binding; does not delete the user's folders."""
+    from . import custom_models, local_models
+    if custom_models.is_custom(model_id):
+        raise HTTPException(400, "本机添加的模型请用「移除」删除登记（不会删除文件夹）。")
+    _spec(model_id)
+    cleared = local_models.clear(model_id)
+    return {"ok": True, "cleared": cleared}
+
+
+@app.get("/api/custom-models/templates")
+def custom_templates():
+    """Built-in models that can be cloned as a local custom entry."""
+    from . import custom_models
+    return {"templates": custom_models.template_info()}
+
+
+@app.post("/api/custom-models")
+def add_custom_model(body: dict = Body(...)):
+    """Add a new catalog entry that loads from local folders (cloned from a built-in template)."""
+    from . import custom_models
+    try:
+        info = custom_models.add(
+            name=body.get("name") or "",
+            template_id=body.get("template_id") or "",
+            path=body.get("path") or "",
+            base_path=body.get("base_path"),
+            maker=body.get("maker") or "本机",
+        )
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+    spec = _spec(info["id"])
+    return {"ok": True, **info, "view": model_view(spec)}
+
+
+@app.delete("/api/custom-models/{model_id}")
+async def delete_custom_model(model_id: str):
+    """Remove a user-added model from the catalog; does not delete weight folders."""
+    from . import custom_models
+    if not custom_models.is_custom(model_id):
+        raise HTTPException(404, f"不是本机添加的模型：{model_id}")
+    if model_id in workers.handles:
+        await workers.stop(model_id)
+    if not custom_models.delete(model_id):
+        raise HTTPException(404, f"找不到本机模型：{model_id}")
+    return {"ok": True, "removed": model_id}
 
 
 # ------------------------------------------------------------------------------------------------------------------

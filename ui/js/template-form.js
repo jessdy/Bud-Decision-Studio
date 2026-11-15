@@ -8,31 +8,31 @@ const MEDIA = ['image', 'audio', 'video'];
 
 // ------------------------------------------------------------------ variables
 function field(name, v, val, media) {
-  const req = v.required ? '' : '<span class="faint small">optional</span>';
+  const req = v.required ? '' : '<span class="faint small">可选</span>';
   const help = v.description ? `<span class="help">${esc(v.description)}</span>` : '';
-  const lab = `<span class="label"><code>${esc(name)}</code> ${req}${v.sensitive ? ` <span class="chip" data-tip="Used for this decision, never written to History">${icon('lock-simple')}sensitive</span>` : ''}</span>`;
-  const ph = v.example != null ? String(typeof v.example === 'string' ? v.example : JSON.stringify(v.example)) : v.default != null ? `Default: ${typeof v.default === 'string' ? v.default : JSON.stringify(v.default)}` : '';
+  const lab = `<span class="label"><code>${esc(name)}</code> ${req}${v.sensitive ? ` <span class="chip" data-tip="仅用于本次决策，不会写入历史">${icon('lock-simple')}敏感</span>` : ''}</span>`;
+  const ph = v.example != null ? String(typeof v.example === 'string' ? v.example : JSON.stringify(v.example)) : v.default != null ? `默认：${typeof v.default === 'string' ? v.default : JSON.stringify(v.default)}` : '';
   let input;
   if (v.type === 'string' && v.enum) {
-    input = `<select class="select" data-var="${esc(name)}">${v.required && v.default == null ? '' : `<option value="">${v.default != null ? `Default (${esc(v.default)})` : 'Not set'}</option>`}${v.enum.map((o) => `<option ${val === o ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>`;
+    input = `<select class="select" data-var="${esc(name)}">${v.required && v.default == null ? '' : `<option value="">${v.default != null ? `默认（${esc(v.default)}）` : '未设置'}</option>`}${v.enum.map((o) => `<option ${val === o ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>`;
   } else if (v.type === 'string' && (v.max_length == null || v.max_length > 160) && !v.format) {
     input = `<textarea class="textarea" rows="${name.includes('message') || (v.max_length || 20000) > 1000 ? 4 : 2}" data-var="${esc(name)}" placeholder="${esc(ph)}">${esc(val ?? '')}</textarea>`;
   } else if (v.type === 'string') {
-    input = `<input class="input" data-var="${esc(name)}" value="${esc(val ?? '')}" placeholder="${esc(ph || (v.format ? `A ${v.format}, e.g. 2026-10-01` : ''))}">`;
+    input = `<input class="input" data-var="${esc(name)}" value="${esc(val ?? '')}" placeholder="${esc(ph || (v.format ? `${v.format} 格式，例如 2026-10-01` : ''))}">`;
   } else if (v.type === 'integer' || v.type === 'number') {
     input = `<input class="input" type="number" data-var="${esc(name)}" value="${esc(val ?? '')}" ${v.type === 'integer' ? 'step="1"' : 'step="any"'} ${v.minimum != null ? `min="${v.minimum}"` : ''} ${v.maximum != null ? `max="${v.maximum}"` : ''} placeholder="${esc(ph)}" style="max-width:180px">`;
   } else if (v.type === 'boolean') {
-    input = `<select class="select" data-var="${esc(name)}" style="max-width:180px"><option value="">${v.default != null ? `Default (${v.default ? 'yes' : 'no'})` : 'Not set'}</option><option value="true" ${val === 'true' ? 'selected' : ''}>Yes</option><option value="false" ${val === 'false' ? 'selected' : ''}>No</option></select>`;
+    input = `<select class="select" data-var="${esc(name)}" style="max-width:180px"><option value="">${v.default != null ? `默认（${v.default ? '是' : '否'}）` : '未设置'}</option><option value="true" ${val === 'true' ? 'selected' : ''}>是</option><option value="false" ${val === 'false' ? 'selected' : ''}>否</option></select>`;
   } else if (v.type === 'json') {
     input = `<textarea class="textarea code" rows="4" data-var="${esc(name)}" spellcheck="false" placeholder="${esc(ph || '{ }')}">${esc(val ?? '')}</textarea>`;
   } else if (v.type === 'options') {
-    input = `<textarea class="textarea" rows="4" data-var="${esc(name)}" placeholder="One option per line. Add a description after a colon: click search: open the search page">${esc(val ?? '')}</textarea>`;
+    input = `<textarea class="textarea" rows="4" data-var="${esc(name)}" placeholder="每行一个选项。冒号后可加说明，例如：click search: 打开搜索页">${esc(val ?? '')}</textarea>`;
   } else if (MEDIA.includes(v.type)) {
     const m = media?.[name];
     input = `<label class="dropzone" data-drop="${esc(name)}"><input type="file" accept="${v.type}/*" hidden data-file="${esc(name)}">
       ${m ? (v.type === 'image' ? `<img src="${esc(m.url)}" alt="" style="height:36px;border-radius:5px">` : icon('file')) : icon('file-arrow-up')}
-      <span>${m ? `<b style="font-weight:500">${esc(m.name)}</b> <span class="muted">replace</span>` : `<b style="font-weight:500">Attach ${v.type}</b> <span class="muted">or drop a file here</span>`}</span>
-      ${m ? `<button class="icon-btn" data-unfile="${esc(name)}" aria-label="Remove">${icon('x')}</button>` : ''}</label>`;
+      <span>${m ? `<b style="font-weight:500">${esc(m.name)}</b> <span class="muted">替换</span>` : `<b style="font-weight:500">附加${v.type === 'image' ? '图像' : v.type === 'audio' ? '音频' : '视频'}</b> <span class="muted">或将文件拖到此处</span>`}</span>
+      ${m ? `<button class="icon-btn" data-unfile="${esc(name)}" aria-label="移除">${icon('x')}</button>` : ''}</label>`;
   }
   return `<label class="field var-field">${lab}${input}${help}</label>`;
 }
@@ -60,17 +60,17 @@ export function bindVarForm(box, { vars, onChange, onFile, onUnfile }) {
 export function varValues(tpl, vars, media) {
   const out = {};
   for (const [n, v] of Object.entries(tpl.variables || {})) {
-    if (MEDIA.includes(v.type)) { if (media?.[n]) out[n] = media[n].id; else if (v.required) return { error: `Attach the ${v.type} for ${n}.`, field: n }; continue; }
+    if (MEDIA.includes(v.type)) { if (media?.[n]) out[n] = media[n].id; else if (v.required) return { error: `请为 ${n} 附加${v.type === 'image' ? '图像' : v.type === 'audio' ? '音频' : '视频'}。`, field: n }; continue; }
     const raw = vars[n];
     if (raw == null || String(raw).trim() === '') {
-      if (v.required && v.default == null) return { error: `Fill in ${n}: ${v.description || 'it is required'}.`, field: n };
+      if (v.required && v.default == null) return { error: `请填写 ${n}：${v.description || '此项为必填'}。`, field: n };
       continue;
     }
     const s = String(raw);
-    if (v.type === 'integer') { if (!/^-?\d+$/.test(s.trim())) return { error: `${n} must be a whole number.`, field: n }; out[n] = parseInt(s, 10); }
-    else if (v.type === 'number') { const x = Number(s); if (!Number.isFinite(x)) return { error: `${n} must be a number.`, field: n }; out[n] = x; }
+    if (v.type === 'integer') { if (!/^-?\d+$/.test(s.trim())) return { error: `${n} 必须为整数。`, field: n }; out[n] = parseInt(s, 10); }
+    else if (v.type === 'number') { const x = Number(s); if (!Number.isFinite(x)) return { error: `${n} 必须为数字。`, field: n }; out[n] = x; }
     else if (v.type === 'boolean') out[n] = s === 'true';
-    else if (v.type === 'json') { try { out[n] = JSON.parse(s); } catch (e) { return { error: `${n} is not valid JSON: ${e.message}`, field: n }; } }
+    else if (v.type === 'json') { try { out[n] = JSON.parse(s); } catch (e) { return { error: `${n} 不是有效的 JSON：${e.message}`, field: n }; } }
     else if (v.type === 'options') {
       const lines = s.split('\n').map((x) => x.trim()).filter(Boolean);
       const described = lines.some((l) => l.includes(':'));
@@ -121,16 +121,16 @@ export function lockedQuestionsHTML(tpl, { skip = [], addOptions = {} } = {}) {
     const canAdd = (ext.options === true || (ext.options || []).includes(k)) && !['score', 'noul'].includes(q.type);
     const o = optionsOf(q);
     const added = addOptions[k] || [];
-    const chips = o.dynamic ? `<span class="chip violet">from ${esc(o.dynamic)}</span>`
+    const chips = o.dynamic ? `<span class="chip violet">来自 ${esc(o.dynamic)}</span>`
       : (o.list || []).map(([n, d], i) => `${o.scale && i ? `<span class="arrow">${icon('caret-right')}</span>` : ''}<span class="opt ro" ${d ? `title="${esc(typeof d === 'string' ? d : JSON.stringify(d))}"` : ''}><span class="name">${esc(n.replace(/_/g, ' '))}</span></span>`).join('');
     return `<div class="q locked ${skipped ? 'skipped' : ''}" data-tq="${esc(k)}">
       <div class="q-top"><span class="q-type ro">${icon(meta.icon)}${meta.name}</span>
         <span class="q-text ro">${esc(typeof q.instructions === 'string' ? q.instructions : JSON.stringify(q.instructions ?? ''))}</span>
-        ${canSkip ? `<label class="switch small" data-tip="${skipped ? 'Skipped in this decision' : 'Ask this question'}"><input type="checkbox" data-skip="${esc(k)}" ${skipped ? '' : 'checked'} aria-label="Ask ${esc(k)}"></label>` : `<span class="lock" data-tip="From the template">${icon('lock-simple')}</span>`}
+        ${canSkip ? `<label class="switch small" data-tip="${skipped ? '本次决策已跳过' : '提出此问题'}"><input type="checkbox" data-skip="${esc(k)}" ${skipped ? '' : 'checked'} aria-label="提问 ${esc(k)}"></label>` : `<span class="lock" data-tip="来自模板">${icon('lock-simple')}</span>`}
       </div>
       ${skipped ? '' : `<div class="q-body"><div class="opts ro">${chips}
-        ${added.map((n, i) => `<span class="opt added"><span class="name">${esc(n)}</span><span class="desc">added for this decision</span><button class="x" data-unadd="${esc(k)}" data-i="${i}" aria-label="Remove ${esc(n)}">${icon('x')}</button></span>`).join('')}
-        ${canAdd ? `<input class="opt-add" data-addopt="${esc(k)}" inputmode="${q.type === 'number' ? 'decimal' : 'text'}" placeholder="Add an option for this decision" aria-label="Add an option to ${esc(k)}">` : ''}</div></div>`}
+        ${added.map((n, i) => `<span class="opt added"><span class="name">${esc(n)}</span><span class="desc">本次决策新增</span><button class="x" data-unadd="${esc(k)}" data-i="${i}" aria-label="移除 ${esc(n)}">${icon('x')}</button></span>`).join('')}
+        ${canAdd ? `<input class="opt-add" data-addopt="${esc(k)}" inputmode="${q.type === 'number' ? 'decimal' : 'text'}" placeholder="为本次决策添加选项" aria-label="向 ${esc(k)} 添加选项">` : ''}</div></div>`}
     </div>`;
   }).join('');
 }

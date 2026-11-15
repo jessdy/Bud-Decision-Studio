@@ -88,8 +88,8 @@ export function codeBlock(code, { lang = 'json', file = '', wrap = false, maxHei
     <div class="code-head">
       ${file ? `<span class="file">${esc(file)}</span>` : ''}<span class="lang">${esc(LANG_NAME[lang] || lang)}</span>
       <span class="right">
-        <button class="icon-btn" data-code-wrap aria-label="Wrap long lines" data-tip="Wrap long lines">${icon('text-t')}</button>
-        <button class="btn btn-quiet sm" data-code-copy>${icon('copy')}Copy</button>
+        <button class="icon-btn" data-code-wrap aria-label="自动换行" data-tip="自动换行">${icon('text-t')}</button>
+        <button class="btn btn-quiet sm" data-code-copy>${icon('copy')}复制</button>
       </span>
     </div>
     <pre tabindex="0"${maxHeight ? ` style="max-height:${maxHeight}px"` : ''}><code>${highlightLines(code, lang)}</code></pre>
@@ -98,11 +98,11 @@ export function codeBlock(code, { lang = 'json', file = '', wrap = false, maxHei
 
 document.addEventListener('click', (e) => {
   const c = e.target.closest('[data-code-copy]');
-  if (c) { const box = c.closest('[data-code]'); copy(sources.get(box.dataset.code) ?? '', 'Copied to the clipboard'); return; }
+  if (c) { const box = c.closest('[data-code]'); copy(sources.get(box.dataset.code) ?? '', '已复制到剪贴板'); return; }
   const w = e.target.closest('[data-code-wrap]');
   if (w) w.closest('.code').classList.toggle('wrap');
   const j = e.target.closest('[data-json-copy]');
-  if (j) copy(sources.get(j.dataset.jsonCopy) ?? '', 'JSON copied');
+  if (j) copy(sources.get(j.dataset.jsonCopy) ?? '', 'JSON 已复制');
 });
 
 // ------------------------------------------------------------------ JSON tree
@@ -126,7 +126,7 @@ function node(key, v, depth, last, opts) {
     return `<span class="row">${k}<span class="tk-p">[</span>${v.map(scalar).join('<span class="tk-p">, </span>')}<span class="tk-p">]</span>${comma}</span>`;
   }
   const open = depth < (opts.openDepth ?? 3) && !(opts.collapse || []).includes(key);
-  const fold = `<span class="fold"> ${entries.length} ${isArr ? (entries.length === 1 ? 'item' : 'items') : (entries.length === 1 ? 'key' : 'keys')} </span><span class="fold tk-p">${c}${last ? '' : ','}</span>`;
+  const fold = `<span class="fold"> ${entries.length} ${isArr ? (entries.length === 1 ? '项' : '项') : (entries.length === 1 ? '个键' : '个键')} </span><span class="fold tk-p">${c}${last ? '' : ','}</span>`;
   const kids = entries.map(([kk, vv], i) => node(kk, vv, depth + 1, i === entries.length - 1, opts)).join('');
   return `<details ${open ? 'open' : ''}><summary>${k}<span class="tk-p">${o}</span>${fold}</summary><div class="kids">${kids}</div><span class="row"><span class="tk-p">${c}</span>${comma}</span></details>`;
 }
@@ -137,7 +137,7 @@ export function jsonTree(value, { file = '', openDepth = 3, collapse = [] } = {}
   sources.set(id, text);
   return `<div class="code">
     <div class="code-head">${file ? `<span class="file">${esc(file)}</span>` : ''}<span class="lang">JSON</span>
-      <span class="right"><button class="btn btn-quiet sm" data-json-copy="${id}">${icon('copy')}Copy</button></span></div>
+      <span class="right"><button class="btn btn-quiet sm" data-json-copy="${id}">${icon('copy')}复制</button></span></div>
     <div class="jtree" tabindex="0">${node(null, value, 0, true, { openDepth, collapse })}</div>
   </div>`;
 }

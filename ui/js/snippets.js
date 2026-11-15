@@ -4,9 +4,9 @@
 import { py } from './format.js';
 
 export const FORMATS = {
-  typesafe: { name: 'TypeSafe Jev API', path: '/v1/systemone', note: 'The format Jev introduced. Official TypeSafe SDKs work unchanged.' },
-  openrouter: { name: 'OpenRouter Decisions API', path: '/api/alpha/decisions', note: 'OpenRouter\'s decision endpoint: the same body, plus id, provider and cost in the response.' },
-  vercel: { name: 'Vercel AI Gateway', path: '/typesafe/v1/systemone', note: 'Vercel\'s TypeSafe-compatible route, with provider_metadata in the response.' },
+  typesafe: { name: 'TypeSafe Jev API', path: '/v1/systemone', note: 'Jev 推出的格式。官方 TypeSafe SDK 可直接使用，无需修改。' },
+  openrouter: { name: 'OpenRouter Decisions API', path: '/api/alpha/decisions', note: 'OpenRouter 的决策端点：请求体相同，响应中额外包含 id、provider 和 cost。' },
+  vercel: { name: 'Vercel AI Gateway', path: '/typesafe/v1/systemone', note: 'Vercel 的 TypeSafe 兼容路由，响应中包含 provider_metadata。' },
 };
 
 export const LANGS = {

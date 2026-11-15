@@ -17,15 +17,15 @@ import { cancelDownload, downloadPct, ejectModel, setPref, startPolling, store, 
 import { $, $$, esc, fmtBytes, fmtDuration, fmtGB, icon, initTips, popMenu } from './util.js';
 
 const ROUTES = {
-  playground: { page: playground, label: 'Playground', icon: 'flask', sec: '' },
-  templates: { page: templates, label: 'Templates', icon: 'stack', sec: '' },
-  models: { page: models, label: 'Models', icon: 'squares-four', sec: '' },
-  evaluate: { page: evaluate, label: 'Evaluate', icon: 'list-checks', sec: '' },
-  train: { page: train, label: 'Train', icon: 'magic-wand', sec: '' },
-  history: { page: historyPage, label: 'History', icon: 'clock-counter-clockwise', sec: 'Developer' },
-  api: { page: apiPage, label: 'API', icon: 'terminal-window', sec: 'Developer' },
-  learn: { page: learn, label: 'Learn', icon: 'book-open', sec: 'Help' },
-  system: { page: system, label: 'System', icon: 'cpu', sec: 'Help' },
+  playground: { page: playground, label: '试验台', icon: 'flask', sec: '' },
+  templates: { page: templates, label: '模板', icon: 'stack', sec: '' },
+  models: { page: models, label: '模型', icon: 'squares-four', sec: '' },
+  evaluate: { page: evaluate, label: '评测', icon: 'list-checks', sec: '' },
+  train: { page: train, label: '训练', icon: 'magic-wand', sec: '' },
+  history: { page: historyPage, label: '历史', icon: 'clock-counter-clockwise', sec: '开发者' },
+  api: { page: apiPage, label: 'API', icon: 'terminal-window', sec: '开发者' },
+  learn: { page: learn, label: '学习', icon: 'book-open', sec: '帮助' },
+  system: { page: system, label: '系统', icon: 'cpu', sec: '帮助' },
 };
 const ALIASES = { try: 'playground', batch: 'evaluate', code: 'api', activity: 'history' };
 
@@ -49,7 +49,7 @@ function route() {
   main.scrollTop = 0;
   shell.setTitle(ROUTES[name].label, '');
   ROUTES[name].page.mount(main, params);
-  document.title = `${ROUTES[name].label} · Bud Decision Studio`;
+  document.title = `${ROUTES[name].label} · 模型训练中心`;
   renderNav();
 }
 
@@ -65,7 +65,7 @@ function renderNav() {
   const html = Object.entries(ROUTES).map(([k, r]) => {
     let head = '';
     if (r.sec !== sec) { sec = r.sec; head = r.sec ? `<div class="nav-sec">${r.sec}</div>` : ''; }
-    const count = k === 'models' && st ? `<span class="count" title="${downloaded} of ${ms.length} on this machine">${downloaded}</span>` : '';
+    const count = k === 'models' && st ? `<span class="count" title="本机已下载 ${downloaded} / ${ms.length}">${downloaded}</span>` : '';
     return `${head}<a class="nav-item" href="#/${k}" ${current === k ? 'aria-current="page"' : ''} aria-label="${r.label}">${icon(r.icon)}<span>${r.label}</span>${count}</a>`;
   }).join('');
   const nav = $('#nav');
@@ -76,12 +76,12 @@ function renderLoaded() {
   const st = store.state;
   const box = $('#loaded');
   const ms = (st?.models || []).filter((m) => m.worker);
-  const html = `<div class="nav-sec">Loaded</div>${ms.length ? `<div class="loaded">${ms.map((m) => {
+  const html = `<div class="nav-sec">已加载</div>${ms.length ? `<div class="loaded">${ms.map((m) => {
     const cls = m.worker.status === 'ready' ? '' : m.worker.status === 'error' ? 'error' : 'busy';
     return `<div class="loaded-item" title="${esc(m.worker.stage || '')}"><span class="dot ${cls}"></span><span class="name">${esc(m.name)}</span>
       <span class="gb">${m.worker.status === 'ready' ? fmtGB(m.worker.gpu_gb || m.memory_gb) : ''}</span>
-      <button class="icon-btn" data-eject="${m.id}" aria-label="Eject ${esc(m.name)}" data-tip="Eject">${icon('eject')}</button></div>`;
-  }).join('')}</div>` : '<div class="loaded-empty">No model loaded</div>'}`;
+      <button class="icon-btn" data-eject="${m.id}" aria-label="卸载 ${esc(m.name)}" data-tip="卸载">${icon('eject')}</button></div>`;
+  }).join('')}</div>` : '<div class="loaded-empty">未加载模型</div>'}`;
   if (box.dataset.html === html) return;
   box.dataset.html = html; box.innerHTML = html;
   $$('[data-eject]', box).forEach((b) => b.addEventListener('click', () => ejectModel(b.dataset.eject)));
@@ -93,7 +93,7 @@ function memParts() {
   const used = st.models.filter((m) => m.worker).reduce((a, m) => a + (m.worker.gpu_gb || 0), 0);
   const other = Math.max(0, s.mem_used_gb - used);
   const w = (g) => `${Math.max(0, (g / s.mem_total_gb) * 100).toFixed(1)}%`;
-  return { s, bar: `<span class="meter" title="Violet: loaded models. Grey: other programs."><i style="width:${w(used)}"></i><i class="other" style="width:${w(other)}"></i></span>` };
+  return { s, bar: `<span class="meter" title="紫色：已加载模型；灰色：其他程序。"><i style="width:${w(used)}"></i><i class="other" style="width:${w(other)}"></i></span>` };
 }
 
 // Memory lives in the status bar alone, as in LM Studio.
@@ -104,7 +104,7 @@ function renderStatus() {
   const st = store.state;
   const bar = $('#statusbar');
   let html;
-  if (!st) html = '<span class="item">Connecting to the studio</span>';
+  if (!st) html = '<span class="item">正在连接工作室</span>';
   else if (store.error) html = `<span class="item" style="color:var(--red-text)">${icon('warning-circle')}${esc(store.error)}</span>`;
   else {
     const s = st.system;
@@ -114,11 +114,11 @@ function renderStatus() {
     const onDisk = st.models.filter((m) => m.downloaded).length;
     const onCpu = st.runtime?.device === 'cpu';
     const busy = onCpu ? s.cpu_percent : s.gpu_util;
-    html = `<span class="item">${icon(onCpu ? 'cpu' : 'lightning')}${esc(st.runtime?.device_name || s.gpu_name)}${busy != null ? ` <span class="num">${Math.round(busy)}% busy</span>` : ''}</span>
-      <span class="item hide-sm"><span class="term" data-term="unified_memory" tabindex="0">Memory</span>${meter}<span class="num">${fmtGB(s.mem_used_gb)} of ${fmtGB(s.mem_total_gb)}</span></span>
-      <span class="item hide-sm">${icon('hard-drives')}${onDisk} of ${st.models.length} models on this machine</span>
+    html = `<span class="item">${icon(onCpu ? 'cpu' : 'lightning')}${esc(st.runtime?.device_name || s.gpu_name)}${busy != null ? ` <span class="num">${Math.round(busy)}% 繁忙</span>` : ''}</span>
+      <span class="item hide-sm"><span class="term" data-term="unified_memory" tabindex="0">内存</span>${meter}<span class="num">已用 ${fmtGB(s.mem_used_gb)} / 共 ${fmtGB(s.mem_total_gb)}</span></span>
+      <span class="item hide-sm">${icon('hard-drives')}本机模型 ${onDisk} / ${st.models.length}</span>
       <span class="right">
-        ${dlm ? `<a class="item" href="#/models">${icon('download-simple')}Downloading ${esc(dlm.name)} <span class="progress"><i style="width:${downloadPct(dlm)}%"></i></span><span class="num">${downloadPct(dlm)}%</span></a>` : ''}
+        ${dlm ? `<a class="item" href="#/models">${icon('download-simple')}正在下载 ${esc(dlm.name)} <span class="progress"><i style="width:${downloadPct(dlm)}%"></i></span><span class="num">${downloadPct(dlm)}%</span></a>` : ''}
         <span class="item hide-sm">API <code>${esc(location.host)}</code></span>
       </span>`;
   }
@@ -133,9 +133,9 @@ function renderTitleButtons() {
   const dl = $('#downloads');
   const html = `${icon('download-simple')}${n ? `<span class="badge">${n}</span>` : ''}`;
   if (dl.dataset.html !== html) { dl.dataset.html = html; dl.innerHTML = html; }
-  const t = $('#theme');
-  const mode = store.prefs.theme || 'auto';
-  if (t.dataset.mode !== mode) { t.dataset.mode = mode; t.innerHTML = icon(mode === 'dark' ? 'moon' : mode === 'light' ? 'sun' : 'circle-half'); t.setAttribute('aria-label', `Colour theme: ${mode === 'auto' ? 'follow the system' : mode}`); }
+  // Light-only UI: keep theme locked and hide the toggle.
+  if (store.prefs.theme !== 'light') setPref('theme', 'light');
+  document.documentElement.dataset.theme = 'light';
   const sb = $('#sidetoggle');
   if (!sb.dataset.done) { sb.dataset.done = '1'; sb.innerHTML = icon('sidebar-simple'); }
 }
@@ -150,24 +150,18 @@ $('#downloads').addEventListener('click', (e) => {
   if (act) {
     const d = act.download, got = d.have + d.partial, sp = q.active.speed_bps;
     const eta = sp > 0 ? (d.total - got) / sp : null;
-    rows += `<div style="padding:8px 9px;display:grid;gap:6px;min-width:300px"><div style="display:flex;gap:8px;align-items:baseline"><b style="font-weight:600">${esc(act.name)}</b><span class="muted small num">${fmtBytes(got)} of ${fmtBytes(d.total)}</span>
-      <button class="btn btn-quiet sm" data-pick="cancel:${act.id}" style="margin-left:auto">Cancel</button></div>
-      <span class="progress"><i style="width:${downloadPct(act)}%"></i></span><span class="small muted">${sp ? `${fmtBytes(sp)}/s` : ''}${eta ? `, ${fmtDuration(eta)} left` : ''}</span></div>`;
+    rows += `<div style="padding:8px 9px;display:grid;gap:6px;min-width:300px"><div style="display:flex;gap:8px;align-items:baseline"><b style="font-weight:600">${esc(act.name)}</b><span class="muted small num">${fmtBytes(got)} / ${fmtBytes(d.total)}</span>
+      <button class="btn btn-quiet sm" data-pick="cancel:${act.id}" style="margin-left:auto">取消</button></div>
+      <span class="progress"><i style="width:${downloadPct(act)}%"></i></span><span class="small muted">${sp ? `${fmtBytes(sp)}/s` : ''}${eta ? `，剩余 ${fmtDuration(eta)}` : ''}</span></div>`;
   }
-  rows += queued.map((m) => `<div style="padding:6px 9px;display:flex;gap:8px;align-items:center"><span>${esc(m.name)}</span><span class="muted small">${fmtBytes(m.download.remaining || m.download_bytes)}, queued</span><button class="btn btn-quiet sm" data-pick="cancel:${m.id}" style="margin-left:auto">Remove</button></div>`).join('');
-  if (!rows) rows = '<div style="padding:10px 9px" class="muted">No downloads in progress.</div>';
-  const tip = !st.hf_signed_in && act ? '<div class="small muted" style="padding:8px 9px;border-top:1px solid var(--line-2);margin-top:4px;max-width:340px">Hugging Face throttles anonymous downloads. Run <code>hf auth login</code> once, then restart the studio, for faster downloads.</div>' : '';
-  const more = `<button class="menu-item" data-pick="choose:">${icon('plus')}Download more models</button>`;
-  popMenu(e.currentTarget, `<div class="menu-group">Downloads</div>${rows}${tip}<div class="menu-sep"></div>${more}`, { align: 'right', onPick: (v) => { const [a, id] = v.split(':'); if (a === 'cancel') cancelDownload(id); if (a === 'choose') openChooser(); } });
+  rows += queued.map((m) => `<div style="padding:6px 9px;display:flex;gap:8px;align-items:center"><span>${esc(m.name)}</span><span class="muted small">${fmtBytes(m.download.remaining || m.download_bytes)}，排队中</span><button class="btn btn-quiet sm" data-pick="cancel:${m.id}" style="margin-left:auto">移除</button></div>`).join('');
+  if (!rows) rows = '<div style="padding:10px 9px" class="muted">当前没有进行中的下载。</div>';
+  const tip = !st.hf_signed_in && act ? '<div class="small muted" style="padding:8px 9px;border-top:1px solid var(--line-2);margin-top:4px;max-width:340px">Hugging Face 会限制匿名下载。请先运行一次 <code>hf auth login</code>，然后重启工作室，以获得更快的下载速度。</div>' : '';
+  const more = `<button class="menu-item" data-pick="choose:">${icon('plus')}下载更多模型</button>`;
+  popMenu(e.currentTarget, `<div class="menu-group">下载</div>${rows}${tip}<div class="menu-sep"></div>${more}`, { align: 'right', onPick: (v) => { const [a, id] = v.split(':'); if (a === 'cancel') cancelDownload(id); if (a === 'choose') openChooser(); } });
 });
 
-$('#theme').addEventListener('click', () => {
-  const order = ['auto', 'light', 'dark'];
-  const next = order[(order.indexOf(store.prefs.theme || 'auto') + 1) % 3];
-  setPref('theme', next);
-  if (next === 'auto') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = next;
-  renderTitleButtons();
-});
+$('#theme')?.addEventListener('click', () => { /* light-only */ });
 
 $('#sidetoggle').addEventListener('click', () => {
   const app = $('#app');

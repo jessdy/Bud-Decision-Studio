@@ -69,12 +69,8 @@ def derived_specs(catalog) -> list:
 def refresh() -> list[str]:
     """Bring the running process's catalog up to date after a job saved or a user deleted a fine-tune."""
     from . import catalog
-    released = [s for s in catalog.CATALOG if not s.finetune_dir]
-    now = derived_specs(released)
-    catalog.CATALOG[:] = released + now
-    catalog.BY_ID.clear()
-    catalog.BY_ID.update({m.id: m for m in catalog.CATALOG})
-    return [s.id for s in now]
+    catalog.rebuild()
+    return [s.id for s in catalog.CATALOG if s.finetune_dir]
 
 
 def spec_from_dir(d: Path):

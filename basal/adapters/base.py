@@ -90,8 +90,13 @@ class Adapter:
     def snapshot(repo_id: str) -> str:
         """Local path of an already-downloaded Hub repo (never touches the network).
 
+        Prefers a folder registered via「从本地目录加载」. Otherwise uses the Hugging Face cache.
         The studio downloads repos with include/exclude patterns (e.g. it skips README images). huggingface_hub >= 1.3
         checks a cached snapshot against the full repo listing unless it is given the same patterns, so pass them."""
+        from .. import local_models
+        local = local_models.path_for_repo(repo_id)
+        if local is not None:
+            return str(local)
         from huggingface_hub import snapshot_download
         from ..catalog import CATALOG
         repo = next((r for s in CATALOG for r in s.repos() if r.id == repo_id), None)

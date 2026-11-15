@@ -61,7 +61,7 @@ export async function refresh() {
     store.error = null; failures = 0;
   } catch {
     failures++;
-    store.error = failures > 2 ? 'Lost contact with the studio server. Check that it is still running.' : null;
+    store.error = failures > 2 ? '与工作室服务器失去连接，请确认服务仍在运行。' : null;
   }
   emit();
 }
@@ -76,15 +76,15 @@ export const readyModels = () => (store.state?.models || []).filter((m) => m.wor
 
 // Lifecycle phase of a model, used by every phase track: 0 not downloaded, 1 on disk, 2 loading, 3 ready.
 export function phaseOf(m) {
-  if (!m) return { n: 0, word: 'Unknown' };
-  if (m.worker?.status === 'ready') return { n: 3, word: 'Ready' };
-  if (m.worker?.status === 'error') return { n: 2, word: 'Failed to load', error: true };
-  if (m.worker) return { n: 2, word: m.worker.stage || 'Loading', busy: true };
-  if (m.downloaded) return { n: 1, word: 'On disk' };
+  if (!m) return { n: 0, word: '未知' };
+  if (m.worker?.status === 'ready') return { n: 3, word: '就绪' };
+  if (m.worker?.status === 'error') return { n: 2, word: '加载失败', error: true };
+  if (m.worker) return { n: 2, word: m.worker.stage || '加载中', busy: true };
+  if (m.downloaded) return { n: 1, word: '已下载' };
   const dl = store.state?.downloads;
-  if (dl?.active?.model_id === m.id) return { n: 0, word: 'Downloading', busy: true };
-  if (dl?.queue?.includes(m.id)) return { n: 0, word: 'Queued' };
-  return { n: 0, word: 'Not downloaded' };
+  if (dl?.active?.model_id === m.id) return { n: 0, word: '下载中', busy: true };
+  if (dl?.queue?.includes(m.id)) return { n: 0, word: '排队中' };
+  return { n: 0, word: '未下载' };
 }
 export function phaseTrack(m) {
   const p = phaseOf(m);
@@ -102,33 +102,33 @@ export async function act(fn, okMsg) {
   try { const r = await fn(); if (okMsg) toast(okMsg); await refresh(); return r; }
   catch (e) { toast(e.message, 'error'); await refresh(); throw e; }
 }
-export const download = (id) => act(() => api(`/api/models/${id}/download`, { method: 'POST' }), 'Added to the download queue');
-export const cancelDownload = (id) => act(() => api(`/api/models/${id}/download/cancel`, { method: 'POST' }), 'Download cancelled');
+export const download = (id) => act(() => api(`/api/models/${id}/download`, { method: 'POST' }), '已加入下载队列');
+export const cancelDownload = (id) => act(() => api(`/api/models/${id}/download/cancel`, { method: 'POST' }), '已取消下载');
 export const loadModel = (id, options = {}) => act(() => api(`/api/models/${id}/load`, { method: 'POST', body: { options } }));
-export const ejectModel = (id) => act(() => api(`/api/models/${id}/eject`, { method: 'POST' }), 'Ejected. Its memory is free again.');
+export const ejectModel = (id) => act(() => api(`/api/models/${id}/eject`, { method: 'POST' }), '已卸载，内存已释放。');
 
 // Waits until a model is loaded and ready, loading it first if needed. onTick(model) reports progress.
 export async function ensureReady(id, onTick) {
   let m = model(id);
-  if (!m) throw new Error('Choose a model first. Download one from the Models page if the list is empty.');
+  if (!m) throw new Error('请先选择模型。若列表为空，请在模型页下载一个。');
   if (m.worker?.status === 'ready') return m;
-  if (!m.downloaded && !m.worker) throw new Error(`${m.name} is not downloaded yet. Download it from the Models page.`);
+  if (!m.downloaded && !m.worker) throw new Error(`${m.name} 尚未下载，请在模型页下载。`);
   if (!m.worker || m.worker.status === 'error') await loadModel(id);
   const t0 = Date.now();
   for (;;) {
     await refresh();
     m = model(id);
     if (m.worker?.status === 'ready') return m;
-    if (!m.worker || m.worker.status === 'error') throw new Error(`${m.name} failed to load: ${m.worker?.error || 'unknown error'}`);
+    if (!m.worker || m.worker.status === 'error') throw new Error(`${m.name} 加载失败：${m.worker?.error || '未知错误'}`);
     onTick?.(m);
-    if (Date.now() - t0 > 15 * 60 * 1000) throw new Error('Loading is taking unusually long. Check the System page for the model log.');
+    if (Date.now() - t0 > 15 * 60 * 1000) throw new Error('加载时间过长，请在系统页查看模型日志。');
     await new Promise((r) => setTimeout(r, 600));
   }
 }
 
 // ------------------------------------------------------------------ preferences (this browser only)
 function loadPrefs() {
-  const d = { threshold: 0.9, theme: 'auto', lastModel: null, learned: {} };
+  const d = { threshold: 0.9, theme: 'light', lastModel: null, learned: {} };
   try {
     const p = { ...d, ...JSON.parse(localStorage.getItem('basal.prefs') || '{}') };
     p.threshold = clampAct(p.threshold);     // a value saved outside the range (an old Evaluate suggestion) is brought in

@@ -2,31 +2,54 @@
    a step list on the left, one question at a time on the right, buttons bottom right. */
 @font-face { font-family: "Inter"; src: url("assets/InterVariable.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
 
-/* Colour, type and shadow tokens come from the studio: assets/tokens.css is generated from ui/styles.css. */
+/* Fallback tokens when assets/tokens.css is not staged yet (matches ui/styles.css light theme). */
+:root {
+  --ground: #EAF3FF; --ground-top: #F5FAFF; --ground-mid: #E3F0FF; --ground-bottom: #D4E8FF;
+  --surface: #FFFFFF; --surface-glass: rgba(255, 255, 255, .78); --surface-2: #F3F7FF;
+  --fill: #E4EDFB; --fill-2: #D5E3F7; --sidebar: rgba(255, 255, 255, .62);
+  --sidebar-hover: rgba(42, 100, 246, .08); --sidebar-select: rgba(42, 100, 246, .14);
+  --line: rgba(15, 27, 61, .10); --line-2: rgba(42, 100, 246, .08);
+  --text: #0F1B3D; --text-2: #5B6B88; --text-3: #8494AE;
+  --accent: #2A64F6; --accent-hover: #1E54E0; --accent-text: #1E54E0;
+  --accent-tint: #E8F1FF; --accent-tint-2: #D4E4FF; --on-accent: #FFFFFF;
+  --orange: #E09A1A; --orange-text: #8A5A00; --orange-tint: #FFF6E5;
+  --green: #1F9A5A; --green-text: #0E6B3A; --green-tint: #E6F7EE;
+  --red: #E03B3B; --red-text: #B01F1F; --red-tint: #FDECEC;
+  --shadow-card: 0 1px 2px rgba(42, 100, 246, .05), 0 8px 24px rgba(42, 100, 246, .09);
+  --shadow-control: 0 0 0 1px rgba(42, 100, 246, .10), 0 1px 2px rgba(42, 100, 246, .06);
+  --shadow-pop: 0 0 0 1px rgba(42, 100, 246, .08), 0 16px 40px rgba(42, 100, 246, .14);
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", system-ui, sans-serif;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1); color-scheme: light;
+}
 
 * { box-sizing: border-box; margin: 0; }
 html, body { height: 100%; }
-body { font: 14px/1.45 var(--font); color: var(--text); background: var(--ground); -webkit-font-smoothing: antialiased; overflow: hidden; }
+body {
+  font: 14px/1.45 var(--font); color: var(--text-2);
+  background: linear-gradient(165deg, var(--ground-top) 0%, var(--ground-mid) 48%, var(--ground-bottom) 100%);
+  -webkit-font-smoothing: antialiased; overflow: hidden;
+}
+h1 { color: var(--text); }
 [hidden] { display: none !important; }
 button { font: inherit; }
 .i { width: 18px; height: 18px; fill: currentColor; flex: none; }
 
 /* ---------------------------------------------------------------- layout */
 .setup { display: grid; grid-template-columns: 250px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); height: 100%; }
-.rail { background: var(--sidebar); border-right: 1px solid var(--line-2); display: flex; flex-direction: column; padding: 22px 18px; }
+.rail { background: rgba(255, 255, 255, .62); backdrop-filter: blur(18px) saturate(1.25); -webkit-backdrop-filter: blur(18px) saturate(1.25); border-right: 1px solid rgba(255, 255, 255, .72); display: flex; flex-direction: column; padding: 22px 18px; }
 .brand { display: flex; align-items: center; gap: 9px; font-size: 14.5px; letter-spacing: -.01em; }
 .brand b { font-weight: 700; }
 .steps { list-style: none; padding: 0; margin-top: 34px; display: grid; gap: 2px; }
 .steps li { position: relative; padding: 7px 10px 7px 30px; border-radius: 7px; color: var(--text-2); font-weight: 500; }
 .steps li::before { content: ""; position: absolute; left: 10px; top: 50%; width: 9px; height: 9px; margin-top: -4.5px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--text-3); }
-.steps li.current { color: var(--text); background: rgba(120, 110, 150, .12); }
+.steps li.current { color: var(--text); background: rgba(42, 100, 246, .12); }
 .steps li.current::before { background: var(--accent); box-shadow: none; }
 .steps li.done { color: var(--text); }
 .steps li.done::before { background: var(--green); box-shadow: none; }
 .steps li.done::after { content: ""; position: absolute; left: 13px; top: 50%; margin-top: -3.5px; width: 2px; height: 4.5px; border: solid #fff; border-width: 0 1.5px 1.5px 0; transform: rotate(45deg); }
 .version { margin-top: auto; font-size: 12px; color: var(--text-2); }
 
-.page { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--surface); }
+.page { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: rgba(255, 255, 255, .72); backdrop-filter: blur(18px) saturate(1.25); -webkit-backdrop-filter: blur(18px) saturate(1.25); }
 .page-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 44px 52px 28px; }
 .page-body > * { max-width: 760px; }
 .page-foot { display: flex; align-items: center; gap: 8px; min-height: 59px; padding: 12px 20px; border-top: 1px solid var(--line-2); background: var(--surface-2); }
@@ -37,12 +60,12 @@ h1 { font-size: 26px; font-weight: 650; letter-spacing: -.022em; line-height: 1.
 .section-title { margin: 28px 0 8px 2px; font-size: 12.5px; font-weight: 600; color: var(--text-2); }
 
 /* ---------------------------------------------------------------- controls */
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 30px; padding: 0 14px; border: 0; border-radius: 7px; background: var(--surface); color: var(--text); box-shadow: var(--shadow-control); cursor: pointer; font-weight: 500; white-space: nowrap; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 30px; padding: 0 14px; border: 0; border-radius: 12px; background: var(--surface); color: var(--text); box-shadow: var(--shadow-control); cursor: pointer; font-weight: 500; white-space: nowrap; }
 .btn:hover { background: var(--surface-2); }
 .btn:active { transform: scale(.98); }
 .btn:focus-visible, .choice:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .btn[disabled] { opacity: .45; cursor: default; transform: none; }
-.btn-primary { background: var(--accent); color: var(--on-accent); box-shadow: none; min-width: 96px; }
+.btn-primary { background: var(--accent); color: var(--on-accent); box-shadow: 0 1px 2px rgba(42, 100, 246, .25), 0 4px 12px rgba(42, 100, 246, .18); min-width: 96px; }
 .btn-primary:hover { background: var(--accent-hover); }
 .btn-lg { height: 38px; padding: 0 20px; font-size: 14.5px; }
 

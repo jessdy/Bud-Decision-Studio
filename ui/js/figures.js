@@ -4,12 +4,12 @@
 import { certainty, esc, fmtNum, fmtPct, icon } from './util.js';
 
 export const TYPE_META = {
-  choice: { name: 'Pick one', icon: 'choice', api: 'choice' },
-  score: { name: 'Rate on a scale', icon: 'score', api: 'score' },
-  noul: { name: 'Yes or no', icon: 'noul', api: 'noul' },
-  multi: { name: 'Pick any', icon: 'multi', api: 'multi' },
-  rank: { name: 'Put in order', icon: 'rank', api: 'rank' },
-  number: { name: 'Estimate a number', icon: 'number', api: 'number' },
+  choice: { name: '单选', icon: 'choice', api: 'choice' },
+  score: { name: '量表评分', icon: 'score', api: 'score' },
+  noul: { name: '是或否', icon: 'noul', api: 'noul' },
+  multi: { name: '多选', icon: 'multi', api: 'multi' },
+  rank: { name: '排序', icon: 'rank', api: 'rank' },
+  number: { name: '估计数值', icon: 'number', api: 'number' },
 };
 
 const pct = (p) => Math.round((p || 0) * 100);
@@ -48,8 +48,8 @@ function gateOf(a, threshold, server = false) {
   return { top, act: top >= threshold };
 }
 const gateHTML = (g, threshold) => (g.act
-  ? `<span class="gate act">${icon('act')}Act automatically</span>`
-  : `<span class="gate ask">${icon('ask')}Ask a human</span><span class="faint">below ${pct(threshold)}%, the act threshold</span>`);
+  ? `<span class="gate act">${icon('act')}自动执行</span>`
+  : `<span class="gate ask">${icon('ask')}请人工处理</span><span class="faint">低于 ${pct(threshold)}% 行动阈值</span>`);
 
 function extrasHTML(a) {
   const x = a.model_extras;
@@ -68,7 +68,7 @@ function hplot(rows, { threshold, ranked = false, limit = 8 } = {}) {
       <span class="track"><span class="bar" data-sx="${Math.max(0.004, r.p).toFixed(4)}"></span>${th}</span>
       <span class="val">${fmtPct(r.p)}</span></div>`).join('');
   return `<div class="hplot">${body(shown)}
-    ${more > 0 ? `<button class="btn btn-quiet sm more" data-more>${icon('caret-down')}Show all ${rows.length}</button><div class="hidden" data-rest style="display:contents">${body(rows.slice(limit), limit)}</div>` : ''}
+    ${more > 0 ? `<button class="btn btn-quiet sm more" data-more>${icon('caret-down')}显示全部 ${rows.length} 项</button><div class="hidden" data-rest style="display:contents">${body(rows.slice(limit), limit)}</div>` : ''}
     <span></span><span class="axis" aria-hidden="true"><span>0</span><span>25</span><span>50</span><span>75</span><span>100%</span></span><span></span>
   </div>`;
 }
@@ -80,7 +80,7 @@ function choiceFig(a) {
   return {
     answer: nice(a.choice), p: w.p,
     plot: hplot(rows),
-    say: r2 ? `${esc(nice(w.label))} takes ${fmtPct(w.p)} of the model's belief; ${esc(nice(r2.label))} is next at ${fmtPct(r2.p)}.` : '',
+    say: r2 ? `${esc(nice(w.label))} 占模型信念的 ${fmtPct(w.p)}；${esc(nice(r2.label))} 次之，为 ${fmtPct(r2.p)}。` : '',
   };
 }
 
@@ -90,7 +90,7 @@ function rankFig(a) {
   return {
     answer: `1. ${nice(rows[0].label)}`, p: rows[0].p,
     plot: hplot(rows, { ranked: true, limit: 10 }),
-    say: `Ordered from most to least likely. ${rows.length > 1 ? `The gap between first and second is ${Math.round((rows[0].p - rows[1].p) * 100)} points.` : ''}`,
+    say: `按可能性从高到低排序。${rows.length > 1 ? `第一与第二相差 ${Math.round((rows[0].p - rows[1].p) * 100)} 个百分点。` : ''}`,
   };
 }
 
@@ -99,24 +99,24 @@ function multiFig(a, q) {
   const sel = new Set(a.selected || []);
   const rows = Object.entries(a.probabilities).map(([label, p]) => ({ label, p, cls: sel.has(label) ? 'row-sel' : '' })).sort((x, y) => y.p - x.p);
   return {
-    answer: sel.size ? [...sel].map(nice).join(', ') : 'None apply', p: null,
+    answer: sel.size ? [...sel].map(nice).join(', ') : '均不适用', p: null,
     plot: hplot(rows, { threshold: th, limit: 12 }),
-    say: `${sel.size} of ${rows.length} apply. Each option is judged on its own; the dashed line is the ${pct(th)}% cut-off.`,
+    say: `${rows.length} 项中有 ${sel.size} 项适用。每项单独评判；虚线为 ${pct(th)}% 的选取阈值。`,
   };
 }
 
 function noulFig(a, q) {
   const y = a.noul;
   const yes = y >= 0.5;
-  const yesLabel = q?.criteria?.true ? `Yes: ${q.criteria.true}` : 'Yes';
+  const yesLabel = q?.criteria?.true ? `是：${q.criteria.true}` : '是';
   return {
-    answer: yes ? 'Yes' : 'No', p: yes ? y : 1 - y,
+    answer: yes ? '是' : '否', p: yes ? y : 1 - y,
     plot: `<div class="ygauge">
-      <div class="track" role="img" aria-label="No ${fmtPct(1 - y)}, yes ${fmtPct(y)}">
+      <div class="track" role="img" aria-label="否 ${fmtPct(1 - y)}，是 ${fmtPct(y)}">
         <span class="bar no ${yes ? '' : 'win'}" data-sx="${Math.max(0.004, 1 - y).toFixed(4)}"></span>
         <span class="bar yes ${yes ? 'win' : ''}" data-sx="${Math.max(0.004, y).toFixed(4)}"></span><span class="mid"></span></div>
-      <div class="axis"><span class="${yes ? '' : 'win'}">No <span class="num">${fmtPct(1 - y)}</span></span><span>50%</span><span class="${yes ? 'win' : ''}">Yes <span class="num">${fmtPct(y)}</span></span></div></div>`,
-    say: `The probability that the statement is true is ${fmtPct(y, 1)}. ${esc(yesLabel === 'Yes' ? '' : yesLabel)}`,
+      <div class="axis"><span class="${yes ? '' : 'win'}">否 <span class="num">${fmtPct(1 - y)}</span></span><span>50%</span><span class="${yes ? 'win' : ''}">是 <span class="num">${fmtPct(y)}</span></span></div></div>`,
+    say: `该陈述为真的概率为 ${fmtPct(y, 1)}。${esc(yesLabel === '是' ? '' : yesLabel)}`,
   };
 }
 
@@ -130,9 +130,9 @@ function scoreFig(a, q) {
     answer: nice(levels[top]), p: probs[top],
     plot: `<div class="hist" style="--n:${n}">
       <div class="plotwrap"><div class="cols">${probs.map((p, i) => `<span class="col ${i === top ? 'win' : ''}" title="${esc(levels[i])}: ${fmtPct(p)}"><i data-sy="${Math.max(0.006, p).toFixed(4)}"></i></span>`).join('')}</div>${yScale}</div>
-      <div class="line"><span class="marker" style="left:0" data-left="calc(${(pos * 100).toFixed(2)}% * ${(n - 1) / n} + ${(50 / n).toFixed(3)}%)" title="Average position ${fmtNum(a.score, 2)}"></span></div>
+      <div class="line"><span class="marker" style="left:0" data-left="calc(${(pos * 100).toFixed(2)}% * ${(n - 1) / n} + ${(50 / n).toFixed(3)}%)" title="平均位置 ${fmtNum(a.score, 2)}"></span></div>
       <div class="labels">${levels.map((l, i) => `<span class="${i === top ? 'win' : ''}">${esc(nice(l))}<span class="num">${fmtPct(probs[i])}</span></span>`).join('')}</div></div>`,
-    say: `Most likely ${esc(nice(levels[top]))}. The ring marks the average position, ${fmtNum(a.score, 2)} on a 0 to ${n - 1} scale, which can land between levels.`,
+    say: `最可能为 ${esc(nice(levels[top]))}。圆环标出平均位置 ${fmtNum(a.score, 2)}（0 至 ${n - 1} 量表），可落在相邻等级之间。`,
   };
 }
 
@@ -146,13 +146,13 @@ function numberFig(a) {
   return {
     answer: `${fmtNum(a.estimate, 1)}${unit}`, p: null,
     plot: `<div class="nplot"><div class="plotwrap">
-      <div class="area" role="img" aria-label="Estimate ${fmtNum(a.estimate, 1)}${esc(unit)}, 80% range ${fmtNum(r0)} to ${fmtNum(r1)}">
+      <div class="area" role="img" aria-label="估计值 ${fmtNum(a.estimate, 1)}${esc(unit)}，80% 区间 ${fmtNum(r0)} 至 ${fmtNum(r1)}">
         <span class="band80" style="left:${x(r0)};width:calc(${x(r1)} - ${x(r0)})"></span>
         ${pts.map(([v, p]) => `<span class="stem ${v === a.most_likely ? 'win' : ''}" style="left:${x(v)};height:100%" data-sy="${Math.max(0.01, p).toFixed(4)}" title="${fmtNum(v)}${esc(unitFor(v, a.unit))}: ${fmtPct(p)}"></span>`).join('')}
         <span class="est" style="left:${x(a.estimate)}"><span>${fmtNum(a.estimate, 1)}</span></span>
       </div>${yScale}</div>
       <div class="axis">${pts.map(([v]) => `<span style="left:${x(v)}">${fmtNum(v)}</span>`).join('')}</div></div>`,
-    say: `Each stem is the chance of one value, on the 0 to 100% scale. Best estimate ${fmtNum(a.estimate, 1)}${esc(unit)}; most likely single value ${fmtNum(a.most_likely)}${esc(unitFor(a.most_likely, a.unit))}. The shaded band is the 80% range, ${fmtNum(r0)} to ${fmtNum(r1)}${esc(unit)}.`,
+    say: `每根柱表示某一取值的概率（0–100%）。最佳估计 ${fmtNum(a.estimate, 1)}${esc(unit)}；最可能单值 ${fmtNum(a.most_likely)}${esc(unitFor(a.most_likely, a.unit))}。阴影带为 80% 区间 ${fmtNum(r0)} 至 ${fmtNum(r1)}${esc(unit)}。`,
   };
 }
 
@@ -166,9 +166,9 @@ export function figure(key, a, q, { no = '1a', threshold = 0.9, server = false }
   const g = gateOf(a, threshold, server);
   const c = certainty(g.top);
   const title = q?.instructions || key;
-  const conf = a.confidence != null ? `<span><span class="term" data-term="confidence" tabindex="0">Confidence</span> <span class="num">${fmtNum(a.confidence, 2)}</span></span>` : '';
+  const conf = a.confidence != null ? `<span><span class="term" data-term="confidence" tabindex="0">置信度</span> <span class="num">${fmtNum(a.confidence, 2)}</span></span>` : '';
   return `<figure class="fig ${g.act ? '' : 'unsure'}" style="margin:0" data-key="${esc(key)}">
-    <div class="fig-head"><span class="fig-no">Fig. ${esc(no)}</span><span class="fig-title">${esc(title)}</span>
+    <div class="fig-head"><span class="fig-no">图 ${esc(no)}</span><span class="fig-title">${esc(title)}</span>
       <span class="chip ${g.act ? c.tone : 'amber'}">${esc(c.word)}</span></div>
     <div class="fig-answer"><b>${esc(r.answer)}</b>${r.p != null ? `<span class="num">${odo(fmtPct(r.p))}</span>` : ''}</div>
     ${r.plot}
@@ -201,8 +201,8 @@ document.addEventListener('click', (e) => {
 // A compact single-line readout for tables (batch results, compare matrix, history).
 export function mini(a) {
   if (!a) return '';
-  if (a.type === 'noul') return `${a.noul >= 0.5 ? 'Yes' : 'No'} <span class="faint num">${fmtPct(a.noul >= 0.5 ? a.noul : 1 - a.noul)}</span>`;
-  if (a.type === 'multi') return (a.selected || []).map(nice).join(', ') || '<span class="faint">none</span>';
+  if (a.type === 'noul') return `${a.noul >= 0.5 ? '是' : '否'} <span class="faint num">${fmtPct(a.noul >= 0.5 ? a.noul : 1 - a.noul)}</span>`;
+  if (a.type === 'multi') return (a.selected || []).map(nice).join(', ') || '<span class="faint">无</span>';
   if (a.type === 'number') return `${fmtNum(a.estimate, 1)}${a.unit ? ` ${esc(a.unit)}` : ''} <span class="faint num">${fmtNum(a.range?.[0])} to ${fmtNum(a.range?.[1])}</span>`;
   if (a.type === 'score') {
     const top = Object.entries(a.probabilities).sort((x, y) => y[1] - x[1])[0];

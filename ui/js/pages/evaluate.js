@@ -32,7 +32,7 @@ Syncing between my laptop and phone has been broken since Tuesday.\ttechnical
 Someone else seems to have logged into my account from another country.\taccount
 The courier left my parcel in the rain and it's soaked.\tshipping
 Do you have a public roadmap?\tother`;
-const SAMPLE_Q = { type: 'choice', instructions: 'Which team should handle this message?', criteria: { billing: 'payments, charges, refunds, invoices', technical: 'bugs, crashes, errors, slowness', account: 'login, password, security, profile, deletion', shipping: 'delivery, tracking, parcels, addresses', other: 'anything else' } };
+const SAMPLE_Q = { type: 'choice', instructions: '哪支团队应处理此消息？', criteria: { billing: '付款、扣款、退款、发票', technical: '缺陷、崩溃、错误、变慢', account: '登录、密码、安全、资料、注销', shipping: '配送、物流、包裹、地址', other: '其他' } };
 const KEY = 'bud.eval.v2';
 
 let root, builder, reg;
@@ -58,20 +58,20 @@ export async function mount(el) {
     if (Array.isArray(pre)) selected = new Set(pre);
   } catch { /* nothing prepared */ }
   reg = await registry();
-  setSub('Measure a model on your own labelled examples');
+  setSub('用自有标注示例评测模型');
   root.innerHTML = `<div class="view panes eval-view">
-    <section class="spec" aria-label="Setup">
+    <section class="spec" aria-label="设置">
       <div class="spec-scroll">
-        <div class="spec-section"><div class="spec-title"><h2>1. The question</h2></div><div id="qb"></div></div>
-        <div class="spec-section"><div class="spec-title"><h2>2. Examples</h2><span class="right">
-            <button class="btn btn-quiet sm" id="sample">${icon('sparkle')}Sample</button>
-            <label class="btn btn-quiet sm">${icon('file-arrow-up')}Open file<input type="file" id="file" accept=".txt,.tsv,.csv,.jsonl" hidden></label></span></div>
+        <div class="spec-section"><div class="spec-title"><h2>1. 问题</h2></div><div id="qb"></div></div>
+        <div class="spec-section"><div class="spec-title"><h2>2. 示例</h2><span class="right">
+            <button class="btn btn-quiet sm" id="sample">${icon('sparkle')}示例数据</button>
+            <label class="btn btn-quiet sm">${icon('file-arrow-up')}打开文件<input type="file" id="file" accept=".txt,.tsv,.csv,.jsonl" hidden></label></span></div>
           <div class="state-card" id="dcard"></div></div>
-        <div class="spec-section"><div class="spec-title"><h2>3. Models</h2><span class="right small muted">Loaded models run in parallel</span></div><div class="group model-checks" id="mbox"></div></div>
+        <div class="spec-section"><div class="spec-title"><h2>3. 模型</h2><span class="right small muted">已加载的模型并行运行</span></div><div class="group model-checks" id="mbox"></div></div>
       </div>
-      <div class="decide-bar"><button class="btn btn-primary" id="go">${icon('play')}Run</button></div>
+      <div class="decide-bar"><button class="btn btn-primary" id="go">${icon('play')}运行</button></div>
     </section>
-    <section class="pane" aria-label="Results"><div class="pane-body" id="results"></div></section>
+    <section class="pane" aria-label="结果"><div class="pane-body" id="results"></div></section>
   </div>`;
   const list = [saved.question];
   builder = createBuilder($('#qb', root), { list: () => list, spec: () => null, onChange: () => { saved.question = list[0]; save(); }, onStructure: () => { saved.question = list[0]; save(); }, types: ['choice', 'score', 'noul'], single: true });
@@ -113,17 +113,17 @@ function renderData() {
   let rows = [];
   try { rows = parseRows(saved.dataText); } catch { rows = []; }
   const labeled = rows.filter((r) => r.label != null).length;
-  box.innerHTML = `<div style="padding:10px 14px;display:flex;gap:8px;align-items:baseline;border-bottom:1px solid var(--line-2)"><b style="font-weight:600">${rows.length} example${rows.length === 1 ? '' : 's'}</b><span class="muted small">${labeled} with a correct answer</span></div>
+  box.innerHTML = `<div style="padding:10px 14px;display:flex;gap:8px;align-items:baseline;border-bottom:1px solid var(--line-2)"><b style="font-weight:600">${rows.length} 个示例</b><span class="muted small">${labeled} 个有标准答案</span></div>
     ${rows.length ? `<table class="table ex-preview" style="font-size:12.5px"><tbody>${rows.slice(0, 5).map((r) => `<tr><td><span class="txt" title="${esc(r.text)}">${esc(r.text)}</span></td><td class="muted lbl">${esc(r.label ?? '')}</td></tr>`).join('')}
-      ${rows.length > 5 ? `<tr><td colspan="2" class="muted small">and ${rows.length - 5} more</td></tr>` : ''}</tbody></table>` : '<p class="muted small" style="padding:12px 14px">No examples yet. Load the sample or open a file.</p>'}
-    <details class="disclose" style="border-top:1px solid var(--line-2)"><summary style="padding:0 14px">Edit as text${icon('caret-right', 'chev')}</summary><div class="body" style="padding:0 14px 14px">
-      <textarea class="textarea code" id="data" rows="9" spellcheck="false" placeholder="One example per line. Add the correct answer after a tab.">${esc(saved.dataText)}</textarea>
-      <span class="help">One example per line with the correct answer after a tab, a CSV with <code>text</code> and <code>label</code> columns, or JSON lines. Answers are optional; without them you still get a results table.</span></div></details>`;
+      ${rows.length > 5 ? `<tr><td colspan="2" class="muted small">另有 ${rows.length - 5} 条</td></tr>` : ''}</tbody></table>` : '<p class="muted small" style="padding:12px 14px">尚无示例。加载示例数据或打开文件。</p>'}
+    <details class="disclose" style="border-top:1px solid var(--line-2)"><summary style="padding:0 14px">以文本编辑${icon('caret-right', 'chev')}</summary><div class="body" style="padding:0 14px 14px">
+      <textarea class="textarea code" id="data" rows="9" spellcheck="false" placeholder="每行一个示例，Tab 后为标准答案。">${esc(saved.dataText)}</textarea>
+      <span class="help">每行示例 + Tab + 答案，或含 <code>text</code> 与 <code>label</code> 列的 CSV，或 JSON Lines。答案可选；无答案仍可得结果表。</span></div></details>`;
   const ta = $('#data', box);
   ta.addEventListener('keydown', (e) => { if (e.key === 'Tab' && !e.shiftKey) { e.preventDefault(); const s = ta.selectionStart; ta.setRangeText('\t', s, ta.selectionEnd, 'end'); } });
   ta.addEventListener('change', () => { saved.dataText = ta.value; save(); const open = true; renderData(); if (open) $('#dcard details', root).open = true; });
   ta.addEventListener('input', () => { saved.dataText = ta.value; save(); });
-  $('#go', root).innerHTML = `${icon('play')}Run on ${rows.length} example${rows.length === 1 ? '' : 's'}`;
+  $('#go', root).innerHTML = `${icon('play')}在 ${rows.length} 个示例上运行`;
 }
 
 // ------------------------------------------------------------------ models
@@ -137,8 +137,8 @@ function renderModels() {
   const html = usable.length ? usable.map((m) => {
     const r = reg.models[m.id] || {}; const mk = reg.makers[r.maker_id] || {}; const src = mk.avatar || r.logo || mk.logo;
     return `<label><input type="checkbox" value="${m.id}" ${selected.has(m.id) ? 'checked' : ''}><span class="logo sm">${src ? `<img src="/ui/${esc(src)}" alt="">` : ''}</span>
-      <span class="nm"><b>${esc(m.name)}</b><span>${ready.has(m.id) ? 'Loaded' : 'Loads first'}, ${esc(m.params)}</span></span></label>`;
-  }).join('') : '<p class="muted small" style="padding:12px 14px">Download a model on the Models page first.</p>';
+      <span class="nm"><b>${esc(m.name)}</b><span>${ready.has(m.id) ? '已加载' : '将先加载'}，${esc(m.params)}</span></span></label>`;
+  }).join('') : '<p class="muted small" style="padding:12px 14px">请先在「模型」页面下载模型。</p>';
   if (box.dataset.html === html) return;
   box.dataset.html = html; box.innerHTML = html;
   $$('input[type=checkbox]', box).forEach((c) => c.addEventListener('change', () => { c.checked ? selected.add(c.value) : selected.delete(c.value); box.dataset.html = ''; }));
@@ -151,15 +151,15 @@ async function start() {
   const built = buildQuestions([saved.question], null);
   if (built.error) { toast(built.error, 'error'); builder.setStrict(true); return; }
   question = Object.values(built.questions)[0];
-  try { rows = parseRows(saved.dataText); } catch (e) { toast(`The examples could not be read: ${e.message}`, 'error'); return; }
-  if (!rows.length) { toast('Add at least one example.', 'error'); return; }
-  if (rows.length > 2000) { toast('Up to 2,000 examples per run.', 'error'); return; }
+  try { rows = parseRows(saved.dataText); } catch (e) { toast(`无法读取示例：${e.message}`, 'error'); return; }
+  if (!rows.length) { toast('请至少添加一个示例。', 'error'); return; }
+  if (rows.length > 2000) { toast('每次运行最多 2,000 个示例。', 'error'); return; }
   const models = [...selected].filter((id) => store.state.models.some((m) => m.id === id && (m.downloaded || m.worker)));
-  if (!models.length) { toast('Choose at least one model.', 'error'); return; }
+  if (!models.length) { toast('请至少选择一个模型。', 'error'); return; }
   const keys = question.type === 'choice' ? Object.keys(question.criteria) : question.type === 'score' ? question.criteria.map((_, i) => String(i)) : ['false', 'true'];
   rows = rows.map((r) => ({ ...r, gold: matchLabel(r.label, question, keys) }));
   const unmatched = rows.filter((r) => r.label != null && r.gold == null).length;
-  if (unmatched) toast(`${unmatched} answer${unmatched === 1 ? '' : 's'} did not match any option and will not be scored.`);
+  if (unmatched) toast(`${unmatched} 个答案未匹配任何选项，将不参与计分。`);
   run = { question, keys, rows, results: {}, running: true, done: 0, total: rows.length * models.length, started: performance.now() };
   focus = models[0];
   $('#go', root).disabled = true;
@@ -177,7 +177,7 @@ async function start() {
 async function runModel(mid) {
   const m = store.state.models.find((x) => x.id === mid);
   if (m.worker?.status !== 'ready') {
-    try { await ensureReady(mid, () => setProgress(`Loading ${m.name}`)); }
+    try { await ensureReady(mid, () => setProgress(`正在加载 ${m.name}`)); }
     catch (e) { run.results[mid] = { error: e.message }; return; }
   }
   const out = [];
@@ -191,7 +191,7 @@ async function runModel(mid) {
       out.push({ probs, pred: pi, top: probs[pi], latency: res.latency_ms });
     } catch (e) { out.push({ error: e.message }); }
     run.done++;
-    if (run.done % 3 === 0 || run.done === run.total) setProgress(`${run.done} of ${run.total} decisions`);
+    if (run.done % 3 === 0 || run.done === run.total) setProgress(`${run.done} / ${run.total} 次决策`);
     liveRender();
   }
 }
@@ -267,26 +267,26 @@ function renderResults() {
   const box = $('#results', root);
   if (!box) return;
   if (!run) {
-    box.innerHTML = `<div class="empty" style="min-height:60vh"><div class="glyph">${icon('list-checks')}</div><h2>How good is a model on your data?</h2>
-      <p>Write one question, add examples with the right answer, pick models and press Run. You will see how often each model is right, whether its percentages can be trusted, and which ${term('threshold', 'act threshold')} keeps mistakes under your budget.</p>
-      <p class="small">The sample is 24 support tickets, each labelled with the team that should handle it.</p></div>`;
+    box.innerHTML = `<div class="empty" style="min-height:60vh"><div class="glyph">${icon('list-checks')}</div><h2>模型在你的数据上表现如何？</h2>
+      <p>编写一个问题、添加带标准答案的示例、选择模型并运行。可查看各模型正确率、概率是否可信，以及哪个${term('threshold', '自动执行阈值')}能在误差预算内控制失误。</p>
+      <p class="small">示例为 24 条客服工单，标注了应处理的团队。</p></div>`;
     return;
   }
   const ids = Object.keys(run.results);
   const labeled = run.rows.some((r) => r.gold != null);
   const pctDone = run.total ? Math.round((run.done / run.total) * 100) : 0;
   const head = `<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-      <h2 style="font-size:17px">Results</h2>
-      ${run.running ? `<span class="progress" style="width:160px"><i style="width:${pctDone}%"></i></span><span class="small muted" id="prog">${esc(run.progressText || '')}</span>` : `<span class="small muted">${run.total} decisions in ${run.seconds?.toFixed(1)} s</span>`}
-      <span style="margin-left:auto;display:flex;gap:8px;align-items:center">${labeled ? `<label class="small muted" style="display:flex;gap:6px;align-items:center">Error budget <select class="select" id="budget" style="width:auto">${[0.01, 0.02, 0.05, 0.1, 0.2].map((b) => `<option value="${b}" ${b === budget ? 'selected' : ''}>${fmtPct(b)}</option>`).join('')}</select></label>` : ''}
-        <button class="btn sm" id="csv" ${run.running ? 'disabled' : ''}>${icon('file-csv')}Export CSV</button></span></div>`;
+      <h2 style="font-size:17px">结果</h2>
+      ${run.running ? `<span class="progress" style="width:160px"><i style="width:${pctDone}%"></i></span><span class="small muted" id="prog">${esc(run.progressText || '')}</span>` : `<span class="small muted">${run.total} 次决策，用时 ${run.seconds?.toFixed(1)} 秒</span>`}
+      <span style="margin-left:auto;display:flex;gap:8px;align-items:center">${labeled ? `<label class="small muted" style="display:flex;gap:6px;align-items:center">误差预算 <select class="select" id="budget" style="width:auto">${[0.01, 0.02, 0.05, 0.1, 0.2].map((b) => `<option value="${b}" ${b === budget ? 'selected' : ''}>${fmtPct(b)}</option>`).join('')}</select></label>` : ''}
+        <button class="btn sm" id="csv" ${run.running ? 'disabled' : ''}>${icon('file-csv')}导出 CSV</button></span></div>`;
   box.innerHTML = `${head}${labeled ? leaderboard(ids) : plainBoard(ids)}${labeled && focus && run.results[focus]?.items ? detail(focus) : ''}${examplesTable(ids, labeled)}`;
   $('#budget', box)?.addEventListener('change', (e) => { budget = +e.target.value; renderResults(); });
   $('#csv', box)?.addEventListener('click', exportCsv);
   $$('[data-focus]', box).forEach((r) => r.addEventListener('click', () => { focus = r.dataset.focus; renderResults(); }));
   $$('[data-show]', box).forEach((b) => b.addEventListener('click', () => { show = b.dataset.show; renderResults(); }));
-  $('[data-use-t]', box)?.addEventListener('click', (e) => { setTemperature(+e.currentTarget.dataset.useT); toast(`The Playground now applies a calibration temperature of ${e.currentTarget.dataset.useT}.`); });
-  $('[data-use-th]', box)?.addEventListener('click', (e) => { setPref('threshold', +e.currentTarget.dataset.useTh); toast(`Act threshold set to ${fmtPct(store.prefs.threshold, 1)}.`); });
+  $('[data-use-t]', box)?.addEventListener('click', (e) => { setTemperature(+e.currentTarget.dataset.useT); toast(`试验台已应用校准温度 ${e.currentTarget.dataset.useT}。`); });
+  $('[data-use-th]', box)?.addEventListener('click', (e) => { setPref('threshold', +e.currentTarget.dataset.useTh); toast(`自动执行阈值已设为 ${fmtPct(store.prefs.threshold, 1)}。`); });
 }
 
 function leaderboard(ids) {
@@ -295,19 +295,19 @@ function leaderboard(ids) {
     if (R.error) return `<tr><td>${nameOf(id)}</td><td colspan="4" style="color:var(--red-text)">${esc(R.error)}</td></tr>`;
     const m = metrics(R.items, run.rows);
     const lat = median(R.items.filter((i) => i.latency != null).map((i) => i.latency));
-    if (!m) return `<tr><td>${nameOf(id)}</td><td colspan="4" class="muted">Running</td></tr>`;
-    return `<tr data-focus="${id}" class="${id === focus ? 'sel' : ''}" tabindex="0"><td><b style="font-weight:600">${nameOf(id)}</b><div class="small muted">${m.n} scored${run.running ? ', running' : ''}</div></td>
+    if (!m) return `<tr><td>${nameOf(id)}</td><td colspan="4" class="muted">运行中</td></tr>`;
+    return `<tr data-focus="${id}" class="${id === focus ? 'sel' : ''}" tabindex="0"><td><b style="font-weight:600">${nameOf(id)}</b><div class="small muted">${m.n} 条已计分${run.running ? '，运行中' : ''}</div></td>
       <td><span class="bar"><i style="width:${(m.acc * 100).toFixed(1)}%"></i></span><b class="num">${fmtPct(m.acc)}</b></td>
       <td class="num">${m.ece.toFixed(3)}</td><td class="num">${m.confWrong}</td><td class="num">${fmtMs(lat)}</td></tr>`;
   }).join('');
-  return `<div class="card" style="overflow:hidden"><table class="table hover board"><thead><tr><th>Model</th><th>Right</th><th class="num"><span class="term" data-term="calibration" tabindex="0">Calibration error</span></th><th class="num"><span class="term" tabindex="0" data-tip="Answers given with 90% or more that were wrong: the most dangerous kind of mistake.">Confident mistakes</span></th><th class="num">Typical time</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  return `<div class="card" style="overflow:hidden"><table class="table hover board"><thead><tr><th>模型</th><th>正确率</th><th class="num"><span class="term" data-term="calibration" tabindex="0">校准误差</span></th><th class="num"><span class="term" tabindex="0" data-tip="置信度 ≥90% 却答错：最危险的失误类型。">高置信错误</span></th><th class="num">典型耗时</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
 function plainBoard(ids) {
-  return `<div class="card" style="overflow:hidden"><table class="table"><thead><tr><th>Model</th><th class="num">Done</th><th class="num">Typical time</th><th class="num">Errors</th></tr></thead><tbody>
+  return `<div class="card" style="overflow:hidden"><table class="table"><thead><tr><th>模型</th><th class="num">完成</th><th class="num">典型耗时</th><th class="num">错误</th></tr></thead><tbody>
     ${ids.map((id) => { const R = run.results[id]; if (R.error) return `<tr><td>${nameOf(id)}</td><td colspan="3" style="color:var(--red-text)">${esc(R.error)}</td></tr>`;
-      return `<tr><td>${nameOf(id)}</td><td class="num">${R.items.length} of ${run.rows.length}</td><td class="num">${fmtMs(median(R.items.filter((i) => i.latency != null).map((i) => i.latency)))}</td><td class="num">${R.items.filter((i) => i.error).length}</td></tr>`; }).join('')}
-  </tbody></table></div><p class="help">Add the correct answer to each example (after a tab) to see accuracy, calibration and a safe threshold.</p>`;
+      return `<tr><td>${nameOf(id)}</td><td class="num">${R.items.length} / ${run.rows.length}</td><td class="num">${fmtMs(median(R.items.filter((i) => i.latency != null).map((i) => i.latency)))}</td><td class="num">${R.items.filter((i) => i.error).length}</td></tr>`; }).join('')}
+  </tbody></table></div><p class="help">为每个示例添加标准答案（Tab 后）即可查看准确率、校准与安全阈值。</p>`;
 }
 
 function detail(id) {
@@ -317,26 +317,26 @@ function detail(id) {
   const T = run.running ? null : fitTemperature(items, run.rows);
   const mT = T ? metrics(items, run.rows, T) : null;
   const safe = run.running ? undefined : safeThreshold(items, run.rows);
-  const small = m.n < 50 ? ` With ${m.n} examples this is a rough estimate; 100 or more give a dependable one.` : '';
+  const small = m.n < 50 ? ` 仅 ${m.n} 个示例，结果较粗略；建议 ≥100 个更可靠。` : '';
   let tempRow = '';
   if (T) {
     tempRow = mT.ece >= m.ece - 0.005
-      ? `<div class="grow stack"><span class="k"><b style="font-weight:600">No temperature helps</b></span><span class="v small">The best fit (${T.toFixed(2)}) would not lower the calibration error of ${m.ece.toFixed(3)}, so keep the model's own numbers.${small}</span></div>`
-      : `<div class="grow rec"><span class="k" style="display:grid;gap:2px"><b style="font-weight:600">Calibration temperature ${T.toFixed(2)}</b><span class="small muted">Lowers the calibration error from ${m.ece.toFixed(3)} to ${mT.ece.toFixed(3)} without changing any answer: the model is ${T > 1 ? 'overconfident' : 'underconfident'} here.${small}</span></span><span class="v"><button class="btn sm" data-use-t="${T.toFixed(2)}">Use in Playground</button></span></div>`;
+      ? `<div class="grow stack"><span class="k"><b style="font-weight:600">调整温度无益</b></span><span class="v small">最佳拟合（${T.toFixed(2)}）无法将校准误差 ${m.ece.toFixed(3)} 再降低，请保留模型原始概率。${small}</span></div>`
+      : `<div class="grow rec"><span class="k" style="display:grid;gap:2px"><b style="font-weight:600">校准温度 ${T.toFixed(2)}</b><span class="small muted">将校准误差从 ${m.ece.toFixed(3)} 降至 ${mT.ece.toFixed(3)}，且不改变任何答案；此处模型${T > 1 ? '过度自信' : '不够自信'}。${small}</span></span><span class="v"><button class="btn sm" data-use-t="${T.toFixed(2)}">在试验台中使用</button></span></div>`;
   }
   let thRow = '';
   if (safe !== undefined) {
     thRow = safe?.unsure
-      ? `<div class="grow stack"><span class="k" style="color:var(--orange-text)"><b style="font-weight:600">Not sure enough to act</b></span><span class="v small">Fewer than three of these examples reach ${fmtPct(ACT_MIN)} certainty, the lowest act threshold, so there is nothing to automate yet. Send these to a person, describe the options more clearly, or try another model.</span></div>`
+      ? `<div class="grow stack"><span class="k" style="color:var(--orange-text)"><b style="font-weight:600">置信不足，无法自动执行</b></span><span class="v small">不足 3 个示例达到最低阈值 ${fmtPct(ACT_MIN)}，暂无法自动化。请转人工、澄清选项，或换用其他模型。</span></div>`
       : safe
-      ? `<div class="grow rec"><span class="k" style="display:grid;gap:2px"><b style="font-weight:600">Act threshold ${fmtPct(safe.t, 1)}</b><span class="small muted">Keeps mistakes under ${fmtPct(budget)} while automating ${fmtPct(safe.share)} of these examples at ${fmtPct(safe.acc)} accuracy; the rest go to a person.</span></span><span class="v"><button class="btn sm" data-use-th="${safe.t.toFixed(3)}">Use this threshold</button></span></div>`
-      : `<div class="grow stack"><span class="k" style="color:var(--orange-text)"><b style="font-weight:600">No safe threshold</b></span><span class="v small">Even the most confident answers are wrong more than ${fmtPct(budget)} of the time. Send these to a person, or try another model.</span></div>`;
+      ? `<div class="grow rec"><span class="k" style="display:grid;gap:2px"><b style="font-weight:600">自动执行阈值 ${fmtPct(safe.t, 1)}</b><span class="small muted">在误差低于 ${fmtPct(budget)} 的前提下，自动处理 ${fmtPct(safe.share)} 的示例（准确率 ${fmtPct(safe.acc)}），其余转人工。</span></span><span class="v"><button class="btn sm" data-use-th="${safe.t.toFixed(3)}">使用此阈值</button></span></div>`
+      : `<div class="grow stack"><span class="k" style="color:var(--orange-text)"><b style="font-weight:600">无安全阈值</b></span><span class="v small">即便最高置信答案，错误率仍高于 ${fmtPct(budget)}。请转人工或换用其他模型。</span></div>`;
   }
   return `<div style="display:grid;gap:10px">
-    <div style="display:flex;align-items:baseline;gap:8px"><h3 style="font-size:15px">${nameOf(id)}</h3><span class="small muted">Select another model in the table above to compare.</span></div>
+    <div style="display:flex;align-items:baseline;gap:8px"><h3 style="font-size:15px">${nameOf(id)}</h3><span class="small muted">在上方表格中选择其他模型进行对比。</span></div>
     <div class="chart-row" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)">
-      <div class="chart-card"><h3>Are its percentages honest?</h3><span class="sub">How sure it said it was, against how often it was right. Points on the dashed line are honest; below it means overconfident.</span>${reliability(m)}</div>
-      <div class="chart-card"><h3>What each act threshold would do</h3><span class="sub">Share of examples handled automatically (mid violet) and how often those answers were right (deep violet). The orange line is your error budget.</span>${thresholdChart(items, safe)}</div>
+      <div class="chart-card"><h3>概率是否可信？</h3><span class="sub">自称的把握程度与实际正确率。点落在虚线上为诚实；低于虚线表示过度自信。</span>${reliability(m)}</div>
+      <div class="chart-card"><h3>各自动执行阈值的效果</h3><span class="sub">自动处理占比（浅紫）与自动处理时的正确率（深紫）。橙线为误差预算。</span>${thresholdChart(items, safe)}</div>
     </div>
     ${tempRow || thRow ? `<div class="group">${thRow}${tempRow}</div>` : ''}
   </div>`;
@@ -348,11 +348,11 @@ function reliability(m) {
   const pts = m.bins.filter((b) => b.n);
   const maxN = Math.max(...pts.map((b) => b.n));
   const ticks = [0, 0.25, 0.5, 0.75, 1];
-  return `<figure class="reliability" style="margin:0"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Reliability chart: confidence against accuracy">
+  return `<figure class="reliability" style="margin:0"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="可靠性图：置信度与准确率">
     ${ticks.map((t) => `<line class="grid-l" x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}"/><text x="${L - 6}" y="${y(t) + 4}" text-anchor="end">${t * 100}%</text><text x="${x(t)}" y="${H - 8}" text-anchor="middle">${t * 100}%</text>`).join('')}
     <line class="diag" x1="${x(0)}" y1="${y(0)}" x2="${x(1)}" y2="${y(1)}"/>
     ${pts.length > 1 ? `<polyline class="curve" points="${pts.map((b) => `${x(b.conf)},${y(b.acc)}`).join(' ')}"/>` : ''}
-    ${pts.map((b) => { const r = 3.5 + 3.5 * Math.sqrt(b.n / maxN); const tip = `Said ${fmtPct(b.lo)} to ${fmtPct(b.lo + 0.1)} sure: ${b.n} example${b.n === 1 ? '' : 's'}, right ${fmtPct(b.acc)} of the time`;
+    ${pts.map((b) => { const r = 3.5 + 3.5 * Math.sqrt(b.n / maxN); const tip = `自称 ${fmtPct(b.lo)}–${fmtPct(b.lo + 0.1)} 把握：${b.n} 个示例，正确率 ${fmtPct(b.acc)}`;
       return `<circle class="pt" cx="${x(b.conf)}" cy="${y(b.acc)}" r="${r.toFixed(1)}"/><circle class="hit" cx="${x(b.conf)}" cy="${y(b.acc)}" r="12" data-tip="${esc(tip)}"/>`; }).join('')}
   </svg></figure>`;
 }
@@ -364,7 +364,7 @@ function thresholdChart(items, safe) {
   const pts = xs.map((t) => [t, coverage(items, run.rows, t)]);
   const cov = pts.map(([t, c]) => `${x(t).toFixed(1)},${y(c.share).toFixed(1)}`).join(' ');
   const acc = pts.filter(([, c]) => c.acc != null).map(([t, c]) => `${x(t).toFixed(1)},${y(c.acc).toFixed(1)}`).join(' ');
-  return `<figure class="reliability" style="margin:0"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Automated share and accuracy by act threshold">
+  return `<figure class="reliability" style="margin:0"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="按自动执行阈值的自动化占比与准确率">
     ${[0, 0.25, 0.5, 0.75, 1].map((t) => `<line class="grid-l" x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}"/><text x="${L - 6}" y="${y(t) + 4}" text-anchor="end">${t * 100}%</text>`).join('')}
     ${[0.5, 0.6, 0.7, 0.8, 0.9, 0.99].map((t) => `<text x="${x(t)}" y="${H - 8}" text-anchor="middle">${Math.round(t * 100)}%</text>`).join('')}
     <line class="budget" x1="${L}" x2="${W - R}" y1="${y(1 - budget)}" y2="${y(1 - budget)}"/>
@@ -382,15 +382,15 @@ function examplesTable(ids, labeled) {
     return outs.some((o) => o.pred !== r.gold && o.top >= 0.9);
   });
   return `<div class="card" style="overflow:hidden">
-    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line-2);flex-wrap:wrap"><h3 style="font-size:13.5px">Every example</h3>
-      ${labeled ? `<span class="seg" role="group" style="margin-left:auto">${[['all', 'All'], ['wrong', 'Mistakes'], ['confident', 'Confident mistakes']].map(([k, l]) => `<button data-show="${k}" aria-pressed="${show === k}">${l}</button>`).join('')}</span>` : ''}</div>
-    <div class="tscroll"><table class="table ex-table"><thead><tr><th class="num">#</th><th>Example</th>${labeled ? '<th>Correct</th>' : ''}${ids.map((id) => `<th>${nameOf(id)}</th>`).join('')}</tr></thead><tbody>
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line-2);flex-wrap:wrap"><h3 style="font-size:13.5px">全部示例</h3>
+      ${labeled ? `<span class="seg" role="group" style="margin-left:auto">${[['all', '全部'], ['wrong', '错误'], ['confident', '高置信错误']].map(([k, l]) => `<button data-show="${k}" aria-pressed="${show === k}">${l}</button>`).join('')}</span>` : ''}</div>
+    <div class="tscroll"><table class="table ex-table"><thead><tr><th class="num">#</th><th>示例</th>${labeled ? '<th>标准答案</th>' : ''}${ids.map((id) => `<th>${nameOf(id)}</th>`).join('')}</tr></thead><tbody>
     ${rows.slice(0, 400).map(({ r, i }) => `<tr><td class="num muted">${i + 1}</td><td><span class="txt" title="${esc(r.text)}">${esc(r.text)}</span></td>
       ${labeled ? `<td>${esc(label(r.gold))}</td>` : ''}
-      ${ids.map((id) => { const o = run.results[id].items?.[i]; if (!o) return '<td class="muted">...</td>'; if (o.error) return `<td class="tag-bad" title="${esc(o.error)}">error</td>`;
-        const mark = r.gold == null ? '' : o.pred === r.gold ? `<span class="tag-ok" aria-label="correct">${icon('check')}</span>` : `<span class="tag-bad" aria-label="wrong">${icon('x')}</span>`;
+      ${ids.map((id) => { const o = run.results[id].items?.[i]; if (!o) return '<td class="muted">...</td>'; if (o.error) return `<td class="tag-bad" title="${esc(o.error)}">错误</td>`;
+        const mark = r.gold == null ? '' : o.pred === r.gold ? `<span class="tag-ok" aria-label="正确">${icon('check')}</span>` : `<span class="tag-bad" aria-label="错误">${icon('x')}</span>`;
         return `<td style="white-space:nowrap">${mark} ${esc(label(o.pred))} <span class="muted num">${fmtPct(o.top)}</span></td>`; }).join('')}</tr>`).join('')}
-    </tbody></table></div>${rows.length > 400 ? `<p class="help" style="padding:10px 14px">Showing 400 of ${rows.length}. Export CSV for all.</p>` : ''}</div>`;
+    </tbody></table></div>${rows.length > 400 ? `<p class="help" style="padding:10px 14px">显示 400 / ${rows.length} 条。导出 CSV 可获取全部。</p>` : ''}</div>`;
 }
 
 function exportCsv() {

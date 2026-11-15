@@ -1,42 +1,42 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bud Decision Studio</title>
-  <meta name="description" content="Run open decision models on your own GPU: ask typed questions, get calibrated probabilities, and call them through the TypeSafe Jev API.">
-  <meta name="theme-color" content="#F5F5F7" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#151417" media="(prefers-color-scheme: dark)">
+  <title>模型训练中心</title>
+  <meta name="description" content="在本地 GPU 上运行开源决策模型：提出结构化问题，获得校准后的概率，并通过 TypeSafe Jev API 调用。">
+  <meta name="theme-color" content="#E3F0FF">
   <link rel="icon" type="image/png" href="/ui/brand/favicon.png">
   <link rel="preload" href="/ui/fonts/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/ui/styles.css">
   <script>
+    document.documentElement.dataset.theme = 'light';
     try {
       const p = JSON.parse(localStorage.getItem('basal.prefs') || '{}');
-      if (p.theme === 'light' || p.theme === 'dark') document.documentElement.dataset.theme = p.theme;
+      if (p.theme !== 'light') localStorage.setItem('basal.prefs', JSON.stringify({ ...p, theme: 'light' }));
     } catch {}
   </script>
 </head>
 <body>
-  <a class="sr" href="#content">Skip to content</a>
+  <a class="sr" href="#content">跳到内容</a>
   <div class="app" id="app">
-    <aside class="sidebar" aria-label="Navigation">
-      <a class="brand" href="#/playground" aria-label="Bud Decision Studio home" data-tauri-drag-region>
-        <img src="/ui/brand/bud-mark.png" alt="" width="22" height="22"><b>Bud <span>Decision Studio</span></b>
+    <aside class="sidebar" aria-label="导航">
+      <a class="brand" href="#/playground" aria-label="模型训练中心首页" data-tauri-drag-region>
+        <b>模型训练中心</b>
       </a>
       <nav class="nav" id="nav"></nav>
       <div id="loaded"></div>
       <div class="side-foot" id="sidefoot"></div>
     </aside>
     <header class="titlebar" data-tauri-drag-region>
-      <button class="icon-btn" id="sidetoggle" aria-label="Show or hide the sidebar" data-tip="Sidebar">
+      <button class="icon-btn" id="sidetoggle" aria-label="显示或隐藏侧边栏" data-tip="侧边栏">
         <svg class="i" viewBox="0 0 256 256" aria-hidden="true"></svg>
       </button>
       <h1 id="ptitle" data-tauri-drag-region></h1>
       <span class="sub" id="psub" data-tauri-drag-region></span>
       <div class="right">
-        <button class="icon-btn" id="downloads" aria-label="Downloads" data-tip="Downloads"></button>
-        <button class="icon-btn" id="theme" aria-label="Colour theme" data-tip="Light, dark, or follow the system"></button>
+        <button class="icon-btn" id="downloads" aria-label="下载" data-tip="下载"></button>
+        <button class="icon-btn" id="theme" hidden aria-hidden="true" tabindex="-1" aria-label="颜色主题"></button>
       </div>
     </header>
     <main class="content" id="content" tabindex="-1"></main>

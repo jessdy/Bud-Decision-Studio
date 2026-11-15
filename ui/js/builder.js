@@ -8,33 +8,33 @@ import { $, $$, askText, esc, icon, popMenu } from './util.js';
 
 export const TYPES = ['choice', 'score', 'noul', 'multi', 'rank', 'number'];
 const TYPE_HELP = {
-  choice: 'Exactly one option from a list, like which team owns a ticket.',
-  score: 'A position on an ordered scale, like how urgent something is.',
-  noul: 'The probability that a statement is true.',
-  multi: 'Every option that applies, like which topics a message raises.',
-  rank: 'All options, ordered from most to least likely.',
-  number: 'A quantity with an honest range, like days until a customer leaves.',
+  choice: '从列表中恰好选一项，例如工单应由哪个团队处理。',
+  score: '有序量表上的位置，例如某事的紧急程度。',
+  noul: '某陈述为真的概率。',
+  multi: '所有适用的选项，例如一条消息涉及哪些主题。',
+  rank: '全部选项，按从最可能到最不可能排序。',
+  number: '带合理区间的数量，例如客户多少天后会流失。',
 };
 const PLACEHOLDER = {
-  choice: 'Which team should handle this?',
-  score: 'How urgent is this?',
-  noul: 'Does the customer ask for a refund?',
-  multi: 'Which topics does the message raise?',
-  rank: 'Which problem should we solve first?',
-  number: 'How many days until the customer leaves?',
+  choice: '应由哪个团队处理？',
+  score: '这有多紧急？',
+  noul: '客户是否要求退款？',
+  multi: '这条消息涉及哪些主题？',
+  rank: '应先解决哪个问题？',
+  number: '客户还有多少天会流失？',
 };
 const SCALES = [
-  ['Low to high', ['low', 'medium', 'high']],
-  ['1 to 5 stars', ['1 star', '2 stars', '3 stars', '4 stars', '5 stars']],
-  ['Never to always', ['never', 'rarely', 'sometimes', 'often', 'always']],
-  ['Disagree to agree', ['strongly disagree', 'disagree', 'neutral', 'agree', 'strongly agree']],
-  ['Trivial to critical', ['trivial', 'minor', 'major', 'critical']],
+  ['由低到高', ['low', 'medium', 'high']],
+  ['1 至 5 星', ['1 star', '2 stars', '3 stars', '4 stars', '5 stars']],
+  ['从不至总是', ['never', 'rarely', 'sometimes', 'often', 'always']],
+  ['反对至同意', ['strongly disagree', 'disagree', 'neutral', 'agree', 'strongly agree']],
+  ['琐碎至严重', ['trivial', 'minor', 'major', 'critical']],
 ];
 const NUMBERS = [
-  ['0 to 10', [0, 1, 2, 3, 5, 7, 10], ''],
-  ['Days', [1, 7, 30, 90, 365], 'days'],
-  ['Percent', [0, 25, 50, 75, 100], '%'],
-  ['Hours', [1, 4, 8, 24, 72], 'hours'],
+  ['0 至 10', [0, 1, 2, 3, 5, 7, 10], ''],
+  ['天数', [1, 7, 30, 90, 365], 'days'],
+  ['百分比', [0, 25, 50, 75, 100], '%'],
+  ['小时', [1, 4, 8, 24, 72], 'hours'],
 ];
 // Option ideas from words in the question, for people facing an empty list.
 const IDEAS = [
@@ -104,21 +104,21 @@ function retype(q, type) {
 export function issues(q, spec, { strict = false } = {}) {
   const out = [];
   const max = spec?.max_options;
-  if (strict && !q.text.trim()) out.push('Write the question as a sentence.');
+  if (strict && !q.text.trim()) out.push('请将问题写成完整句子。');
   if (['choice', 'multi', 'rank'].includes(q.type)) {
     const names = q.options.map((o) => o.name.trim()).filter(Boolean);
-    if (strict && names.length < (q.type === 'multi' ? 1 : 2)) out.push(q.type === 'multi' ? 'Add at least one option.' : 'Add at least two options.');
+    if (strict && names.length < (q.type === 'multi' ? 1 : 2)) out.push(q.type === 'multi' ? '请至少添加一个选项。' : '请至少添加两个选项。');
     const dup = names.find((n, i) => names.indexOf(n) !== i);
-    if (dup) out.push(`Two options are both called "${dup}". Names must be different.`);
-    if (max && names.length > max && q.type !== 'multi') out.push(`${spec.name} accepts up to ${max} options in one question.`);
+    if (dup) out.push(`有两个选项都叫「${dup}」。名称必须不同。`);
+    if (max && names.length > max && q.type !== 'multi') out.push(`${spec.name} 单个问题最多接受 ${max} 个选项。`);
   }
   if (q.type === 'score') {
-    if (strict && q.levels.filter((l) => l.trim()).length < 2) out.push('A scale needs at least two levels.');
-    if (q.levels.length > 10) out.push('Scales work best with at most 10 levels.');
+    if (strict && q.levels.filter((l) => l.trim()).length < 2) out.push('量表至少需要两个等级。');
+    if (q.levels.length > 10) out.push('量表最好不超过 10 个等级。');
   }
   if (q.type === 'number') {
-    if (strict && q.values.length < 2) out.push('Add at least two possible values.');
-    if (new Set(q.values).size !== q.values.length) out.push('Each value can appear only once.');
+    if (strict && q.values.length < 2) out.push('请至少添加两个可能取值。');
+    if (new Set(q.values).size !== q.values.length) out.push('每个取值只能出现一次。');
   }
   return out;
 }
@@ -140,61 +140,61 @@ export function buildQuestions(list, spec) {
     if (q.type === 'number') { out.criteria = [...q.values].sort((a, b) => a - b); if (q.unit.trim()) out.unit = q.unit.trim(); }
     questions[key] = out;
   }
-  if (!Object.keys(questions).length) return { error: 'Add at least one question: choose a kind of answer under Create new Decision.', field: 'questions' };
-  if (spec?.max_questions && Object.keys(questions).length > spec.max_questions) return { error: `${spec.name} accepts up to ${spec.max_questions} questions per request.` };
+  if (!Object.keys(questions).length) return { error: '请至少添加一个问题：在「新建决策」下选择答案类型。', field: 'questions' };
+  if (spec?.max_questions && Object.keys(questions).length > spec.max_questions) return { error: `${spec.name} 每次请求最多接受 ${spec.max_questions} 个问题。` };
   return { questions };
 }
 
 // ------------------------------------------------------------------ rendering
-const chip = (i, name, desc, { kind = 'opt' } = {}) => `<span class="opt" data-i="${i}" data-kind="${kind}" tabindex="0" role="button" aria-label="Edit ${esc(name)}">
+const chip = (i, name, desc, { kind = 'opt' } = {}) => `<span class="opt" data-i="${i}" data-kind="${kind}" tabindex="0" role="button" aria-label="编辑 ${esc(name)}">
   <span class="name">${esc(name)}</span>${desc ? `<span class="desc">${esc(desc)}</span>` : ''}
-  <button class="x" data-act="rm" data-i="${i}" aria-label="Remove ${esc(name)}">${icon('x')}</button></span>`;
+  <button class="x" data-act="rm" data-i="${i}" aria-label="移除 ${esc(name)}">${icon('x')}</button></span>`;
 
 function optionsEditor(q, editing) {
   const ideas = !q.options.length && IDEAS.find(([re]) => re.test(q.text));
-  const hint = { choice: 'The model picks exactly one.', multi: 'The model judges each option on its own.', rank: 'The model orders all of them.' }[q.type];
+  const hint = { choice: '模型恰好选一项。', multi: '模型逐项独立判断。', rank: '模型对全部选项排序。' }[q.type];
   return `<div class="opts">${q.options.map((o, i) => chip(i, o.name, o.desc)).join('')}
-      <input class="opt-add" data-add="opt" placeholder="${q.options.length ? 'Add another option' : 'Type an option, press Enter'}" aria-label="Add an option"></div>
+      <input class="opt-add" data-add="opt" placeholder="${q.options.length ? '再添加一个选项' : '输入选项后按 Enter'}" aria-label="添加选项"></div>
     ${editing != null && q.options[editing] ? `<div class="opt-edit" data-edit="${editing}">
-      <div class="row2"><label class="field"><span class="label">Option name</span><input class="input" data-f="name" value="${esc(q.options[editing].name)}"></label>
-      <label class="field"><span class="label">What it means (the model reads this)</span><input class="input" data-f="desc" value="${esc(q.options[editing].desc)}" placeholder="e.g. invoices, payments, refunds"></label></div>
-      <div style="display:flex;gap:6px"><button class="btn sm" data-act="done">${icon('check')}Done</button><button class="btn btn-quiet sm" data-act="rm" data-i="${editing}">${icon('trash')}Remove</button></div></div>` : ''}
-    ${ideas ? `<div class="presets">Ideas: <button data-act="ideas" data-v="${esc(ideas[1].join('|'))}">${esc(ideas[1].join(', '))}</button></div>` : ''}
-    ${q.type === 'multi' ? `<label class="q-hint" style="gap:10px;flex-wrap:nowrap"><span style="white-space:nowrap">Select when at least</span>
-      <input type="range" min="0.1" max="0.9" step="0.05" value="${q.threshold}" data-f="threshold" style="flex:1;min-width:80px;max-width:180px" aria-label="Selection cut-off">
-      <b class="num" data-th>${Math.round(q.threshold * 100)}%</b><span>likely</span></label>` : ''}
-    <p class="help">${hint} Click an option to describe it; paste a list to add many at once.</p>`;
+      <div class="row2"><label class="field"><span class="label">选项名称</span><input class="input" data-f="name" value="${esc(q.options[editing].name)}"></label>
+      <label class="field"><span class="label">含义（模型会读这段说明）</span><input class="input" data-f="desc" value="${esc(q.options[editing].desc)}" placeholder="例如 invoices, payments, refunds"></label></div>
+      <div style="display:flex;gap:6px"><button class="btn sm" data-act="done">${icon('check')}完成</button><button class="btn btn-quiet sm" data-act="rm" data-i="${editing}">${icon('trash')}移除</button></div></div>` : ''}
+    ${ideas ? `<div class="presets">建议：<button data-act="ideas" data-v="${esc(ideas[1].join('|'))}">${esc(ideas[1].join(', '))}</button></div>` : ''}
+    ${q.type === 'multi' ? `<label class="q-hint" style="gap:10px;flex-wrap:nowrap"><span style="white-space:nowrap">至少达到</span>
+      <input type="range" min="0.1" max="0.9" step="0.05" value="${q.threshold}" data-f="threshold" style="flex:1;min-width:80px;max-width:180px" aria-label="选取概率阈值">
+      <b class="num" data-th>${Math.round(q.threshold * 100)}%</b><span>概率时选中</span></label>` : ''}
+    <p class="help">${hint} 点击选项可编辑说明；粘贴列表可一次添加多项。</p>`;
 }
 
 function levelsEditor(q, editing) {
   const chips = q.levels.map((l, i) => `${i ? `<span class="arrow">${icon('caret-right')}</span>` : ''}${chip(i, l, '', { kind: 'level' })}`).join('');
-  return `<div class="opts">${chips}<input class="opt-add" data-add="level" placeholder="Add a level (highest last)" aria-label="Add a level"></div>
+  return `<div class="opts">${chips}<input class="opt-add" data-add="level" placeholder="添加等级（最高放在最后）" aria-label="添加等级"></div>
     ${editing != null && q.levels[editing] != null ? `<div class="opt-edit" data-edit="${editing}">
-      <label class="field"><span class="label">Level ${editing + 1} of ${q.levels.length}</span><input class="input" data-f="level" value="${esc(q.levels[editing])}"></label>
-      <div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn sm" data-act="done">${icon('check')}Done</button>
-        <button class="btn btn-quiet sm" data-act="lv-move" data-d="-1" ${editing === 0 ? 'disabled' : ''}>${icon('arrow-up')}Move lower</button>
-        <button class="btn btn-quiet sm" data-act="lv-move" data-d="1" ${editing === q.levels.length - 1 ? 'disabled' : ''}>${icon('arrow-down')}Move higher</button>
-        <button class="btn btn-quiet sm" data-act="rm" data-i="${editing}">${icon('trash')}Remove</button></div></div>` : ''}
-    <div class="presets">Scales: ${SCALES.map(([n], i) => `<button data-act="scale" data-i="${i}">${esc(n)}</button>`).join('')}</div>
-    <p class="help">Lowest first. You get the chance of each level and an average position between them.</p>`;
+      <label class="field"><span class="label">第 ${editing + 1} 级，共 ${q.levels.length} 级</span><input class="input" data-f="level" value="${esc(q.levels[editing])}"></label>
+      <div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn sm" data-act="done">${icon('check')}完成</button>
+        <button class="btn btn-quiet sm" data-act="lv-move" data-d="-1" ${editing === 0 ? 'disabled' : ''}>${icon('arrow-up')}上移（更低）</button>
+        <button class="btn btn-quiet sm" data-act="lv-move" data-d="1" ${editing === q.levels.length - 1 ? 'disabled' : ''}>${icon('arrow-down')}下移（更高）</button>
+        <button class="btn btn-quiet sm" data-act="rm" data-i="${editing}">${icon('trash')}移除</button></div></div>` : ''}
+    <div class="presets">量表：${SCALES.map(([n], i) => `<button data-act="scale" data-i="${i}">${esc(n)}</button>`).join('')}</div>
+    <p class="help">从低到高排列。可得到各等级概率及它们之间的平均位置。</p>`;
 }
 
 function valuesEditor(q) {
   return `<div class="opts">${q.values.map((v, i) => chip(i, `${v}${unitFor(v, q.unit)}`, '', { kind: 'value' })).join('')}
-      <input class="opt-add" data-add="value" inputmode="decimal" placeholder="Add a possible value" aria-label="Add a possible value"></div>
+      <input class="opt-add" data-add="value" inputmode="decimal" placeholder="添加可能取值" aria-label="添加可能取值"></div>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      <label class="q-hint">Unit <input class="input" data-f="unit" value="${esc(q.unit)}" placeholder="days" style="width:110px;height:28px;padding:3px 8px"></label>
-      <div class="presets">Sets: ${NUMBERS.map(([n], i) => `<button data-act="numbers" data-i="${i}">${esc(n)}</button>`).join('')}</div></div>
-    <p class="help">List the values the answer could take. You get a best estimate between them and an 80% range.</p>`;
+      <label class="q-hint">单位 <input class="input" data-f="unit" value="${esc(q.unit)}" placeholder="days" style="width:110px;height:28px;padding:3px 8px"></label>
+      <div class="presets">预设：${NUMBERS.map(([n], i) => `<button data-act="numbers" data-i="${i}">${esc(n)}</button>`).join('')}</div></div>
+    <p class="help">列出答案可能的取值。可得到最佳估计值及 80% 区间。</p>`;
 }
 
 function noulEditor(q) {
   const open = q.yes || q.no;
-  return `<p class="help">The model returns the probability that the answer is yes.</p>
-    <details class="more" ${open ? 'open' : ''}><summary>${icon('caret-right')}Define what counts as yes and no</summary>
+  return `<p class="help">模型返回答案为「是」的概率。</p>
+    <details class="more" ${open ? 'open' : ''}><summary>${icon('caret-right')}定义「是」与「否」的含义</summary>
       <div class="opt-edit" style="margin-top:8px"><div class="row2">
-        <label class="field"><span class="label">Yes means</span><input class="input" data-f="yes" value="${esc(q.yes)}" placeholder="optional"></label>
-        <label class="field"><span class="label">No means</span><input class="input" data-f="no" value="${esc(q.no)}" placeholder="optional"></label></div></div></details>`;
+        <label class="field"><span class="label">「是」表示</span><input class="input" data-f="yes" value="${esc(q.yes)}" placeholder="可选"></label>
+        <label class="field"><span class="label">「否」表示</span><input class="input" data-f="no" value="${esc(q.no)}" placeholder="可选"></label></div></div></details>`;
 }
 
 export function rowHTML(q, { index, editing, strict, spec, types = TYPES, single = false }) {
@@ -205,12 +205,12 @@ export function rowHTML(q, { index, editing, strict, spec, types = TYPES, single
   const body = { choice: optionsEditor, multi: optionsEditor, rank: optionsEditor, score: levelsEditor, number: valuesEditor, noul: noulEditor }[q.type](q, editing);
   return `<div class="q" data-uid="${q.uid}">
     <div class="q-top">
-      <button class="q-type" data-act="type" aria-haspopup="menu" aria-label="Question type: ${meta.name}. Change type">${icon(meta.icon)}${meta.name}${icon('caret-down')}</button>
-      <textarea class="q-text" rows="1" data-f="text" placeholder="${esc(guideFor(spec?.id)?.q?.[q.type] || PLACEHOLDER[q.type])}" aria-label="Question ${index + 1}">${esc(q.text)}</textarea>
-      ${single ? '' : `<button class="icon-btn" data-act="more" aria-haspopup="menu" aria-label="More for question ${index + 1}">${icon('dots-three')}</button>`}
+      <button class="q-type" data-act="type" aria-haspopup="menu" aria-label="问题类型：${meta.name}。更改类型">${icon(meta.icon)}${meta.name}${icon('caret-down')}</button>
+      <textarea class="q-text" rows="1" data-f="text" placeholder="${esc(guideFor(spec?.id)?.q?.[q.type] || PLACEHOLDER[q.type])}" aria-label="问题 ${index + 1}">${esc(q.text)}</textarea>
+      ${single ? '' : `<button class="icon-btn" data-act="more" aria-haspopup="menu" aria-label="问题 ${index + 1} 的更多操作">${icon('dots-three')}</button>`}
     </div>
     <div class="q-body">
-      ${sug && sug !== q.type ? `<div class="q-hint">${icon('lightbulb')}<span>This reads like ${TYPE_META[sug].name.toLowerCase()}.</span><button data-act="suggest" data-t="${sug}">Switch to ${TYPE_META[sug].name.toLowerCase()}</button></div>` : ''}
+      ${sug && sug !== q.type ? `<div class="q-hint">${icon('lightbulb')}<span>这看起来像${TYPE_META[sug].name}。</span><button data-act="suggest" data-t="${sug}">切换为${TYPE_META[sug].name}</button></div>` : ''}
       ${body}
       ${tips.length ? `<div class="q-tips">${tips.map((t) => `<p>${icon('warning')}${esc(t)}</p>`).join('')}</div>` : ''}
     </div>
@@ -218,25 +218,25 @@ export function rowHTML(q, { index, editing, strict, spec, types = TYPES, single
 }
 
 const TILE_HELP = {
-  choice: 'One option from a list.',
-  score: 'A level on an ordered scale.',
-  noul: 'How likely a statement is true.',
-  multi: 'Every option that applies.',
-  rank: 'All options, most likely first.',
-  number: 'A value with an honest range.',
+  choice: '从列表中选一项。',
+  score: '有序量表上的一级。',
+  noul: '陈述为真的可能性。',
+  multi: '所有适用的选项。',
+  rank: '全部选项，最可能在前。',
+  number: '带合理区间的数值。',
 };
 
 // A miniature of the answer each type produces, so the tiles show what you get rather than describe it.
 const MINI = {
   choice: '<i class="bar" style="--w:82%"></i><i class="bar" style="--w:30%"></i><i class="bar" style="--w:16%"></i>',
   score: '<i class="scale">' + [0, 1, 2, 3, 4].map((k) => `<b class="${k === 3 ? 'on' : ''}"></b>`).join('') + '</i>',
-  noul: '<i class="yes"><b style="--w:74%"></b></i><i class="yn"><span>Yes</span><span>No</span></i>',
+  noul: '<i class="yes"><b style="--w:74%"></b></i><i class="yn"><span>是</span><span>否</span></i>',
   multi: '<i class="tick on"></i><i class="tick on"></i><i class="tick"></i>',
   rank: '<i class="bar n" style="--w:78%" data-n="1"></i><i class="bar n" style="--w:52%" data-n="2"></i><i class="bar n" style="--w:28%" data-n="3"></i>',
   number: '<i class="range"><b></b><em></em></i>',
 };
 
-export function addGridHTML({ title = 'Create new Decision', text = 'Choose the kind of answer you want. Add as many as you need; the model answers them all at once.' } = {}) {
+export function addGridHTML({ title = '新建决策', text = '选择所需的答案类型。可添加任意多个；模型会一次全部作答。' } = {}) {
   return `<div class="create-dec" role="group" aria-labelledby="createdec">
     <div class="create-dec-head"><h3 id="createdec">${esc(title)}</h3>
       <p>${esc(text)}</p></div>
@@ -357,30 +357,30 @@ export function createBuilder(root, { list, onChange, spec, onStructure, types =
     if (a === 'scale') { q.levels = [...SCALES[+btn.dataset.i][1]]; editing = null; changed(); renderRow(q); return; }
     if (a === 'numbers') { const [, vals, unit] = NUMBERS[+btn.dataset.i]; q.values = [...vals]; q.unit = unit; changed(); renderRow(q); return; }
     if (a === 'scalemenu') {
-      popMenu(btn, `<div class="menu-group">Scale presets</div>${SCALES.map(([n, l], i) => `<button class="menu-item" data-pick="${i}" role="menuitem">${icon('gauge')}<span><b>${esc(n)}</b><span>${esc(l.join(', '))}</span></span></button>`).join('')}`,
+      popMenu(btn, `<div class="menu-group">量表预设</div>${SCALES.map(([n, l], i) => `<button class="menu-item" data-pick="${i}" role="menuitem">${icon('gauge')}<span><b>${esc(n)}</b><span>${esc(l.join(', '))}</span></span></button>`).join('')}`,
         { onPick: (i) => { q.levels = [...SCALES[+i][1]]; editing = null; changed(); renderRow(q); } });
       return;
     }
     if (a === 'numbermenu') {
-      popMenu(btn, `<div class="menu-group">Value presets</div>${NUMBERS.map(([n, vals, unit], i) => `<button class="menu-item" data-pick="${i}" role="menuitem">${icon('ruler')}<span><b>${esc(n)}</b><span>${esc(vals.join(', '))}${unit ? ` ${esc(unit)}` : ''}</span></span></button>`).join('')}`,
+      popMenu(btn, `<div class="menu-group">数值预设</div>${NUMBERS.map(([n, vals, unit], i) => `<button class="menu-item" data-pick="${i}" role="menuitem">${icon('ruler')}<span><b>${esc(n)}</b><span>${esc(vals.join(', '))}${unit ? ` ${esc(unit)}` : ''}</span></span></button>`).join('')}`,
         { onPick: (i) => { const [, vals, unit] = NUMBERS[+i]; q.values = [...vals]; q.unit = unit; changed(); renderRow(q); } });
       return;
     }
     if (a === 'ideas') { addItems(q, 'opt', btn.dataset.v.replace(/\|/g, '\n')); changed(); renderRow(q, '.opt-add'); return; }
     if (a === 'suggest') { retype(q, btn.dataset.t); changed(true); return; }
     if (a === 'type') {
-      popMenu(btn, `<div class="menu-group">Question type</div>${types.map((t) => `<button class="menu-item" data-pick="${t}" role="menuitem">${icon(TYPE_META[t].icon)}<span><b>${TYPE_META[t].name}${t === q.type ? ' (current)' : ''}</b><span>${esc(TYPE_HELP[t])}${['multi', 'rank', 'number'].includes(t) ? ' Studio extension.' : ''}</span></span></button>`).join('')}`,
+      popMenu(btn, `<div class="menu-group">问题类型</div>${types.map((t) => `<button class="menu-item" data-pick="${t}" role="menuitem">${icon(TYPE_META[t].icon)}<span><b>${TYPE_META[t].name}${t === q.type ? '（当前）' : ''}</b><span>${esc(TYPE_HELP[t])}${['multi', 'rank', 'number'].includes(t) ? ' Studio 扩展。' : ''}</span></span></button>`).join('')}`,
         { onPick: (t) => { retype(q, t); editing = null; changed(true); } });
       return;
     }
     if (a === 'more') {
       const i = L().indexOf(q);
       popMenu(btn, `
-        <button class="menu-item" data-pick="up" ${i === 0 ? 'disabled' : ''}>${icon('arrow-up')}<span><b>Move up</b></span></button>
-        <button class="menu-item" data-pick="down" ${i === L().length - 1 ? 'disabled' : ''}>${icon('arrow-down')}<span><b>Move down</b></span></button>
-        <button class="menu-item" data-pick="dup">${icon('copy')}<span><b>Duplicate</b></span></button>
-        <button class="menu-item" data-pick="key">${icon('key')}<span><b>Rename its API key</b><span>Now: ${esc(q.key || autoKey(q.text))}</span></span></button>
-        <button class="menu-item" data-pick="del">${icon('trash')}<span><b>Delete question</b></span></button>`, {
+        <button class="menu-item" data-pick="up" ${i === 0 ? 'disabled' : ''}>${icon('arrow-up')}<span><b>上移</b></span></button>
+        <button class="menu-item" data-pick="down" ${i === L().length - 1 ? 'disabled' : ''}>${icon('arrow-down')}<span><b>下移</b></span></button>
+        <button class="menu-item" data-pick="dup">${icon('copy')}<span><b>复制</b></span></button>
+        <button class="menu-item" data-pick="key">${icon('key')}<span><b>重命名 API 键</b><span>当前：${esc(q.key || autoKey(q.text))}</span></span></button>
+        <button class="menu-item" data-pick="del">${icon('trash')}<span><b>删除问题</b></span></button>`, {
         align: 'right',
         onPick: async (p) => {
           const arr = L();
@@ -389,7 +389,7 @@ export function createBuilder(root, { list, onChange, spec, onStructure, types =
           if (p === 'dup') arr.splice(i + 1, 0, { ...structuredClone(q), uid: blank().uid, key: '', keyEdited: false });
           if (p === 'del') arr.splice(i, 1);
           if (p === 'key') {
-            const k = await askText({ title: 'Rename the API key', label: 'The name this answer has in the JSON response. Letters, digits and underscores.', value: q.key || autoKey(q.text), pattern: '[A-Za-z_][A-Za-z0-9_]{0,63}' });
+            const k = await askText({ title: '重命名 API 键', label: '该答案在 JSON 响应中的字段名。可使用字母、数字和下划线。', value: q.key || autoKey(q.text), pattern: '[A-Za-z_][A-Za-z0-9_]{0,63}' });
             if (k) { q.key = k; q.keyEdited = true; }
           }
           changed(true);

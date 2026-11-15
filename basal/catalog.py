@@ -100,7 +100,7 @@ def _ctx(default: int, maximum: int) -> dict:
             "help": "The longest state + question the model will accept. Longer costs memory and time; a token is roughly 3/4 of a word."}
 
 
-CATALOG: list[ModelSpec] = [
+BUILTIN: list[ModelSpec] = [
     ModelSpec(
         id="julia-1", name="Julia 1", maker="Supersonic Labs", adapter="julia",
         repo=Repo("SupersonicLabs/Julia-1", exclude=("assets/*",), size_gb=0.61, likes=290),
@@ -287,20 +287,41 @@ CATALOG: list[ModelSpec] = [
     ),
 ]
 
-# A deterministic stand-in for tests and CI (basal/adapters/fake_adapter.py): never shown otherwise.
-if __import__("os").environ.get("BASAL_FAKE_MODEL") == "1":
-    CATALOG.append(ModelSpec(
+CATALOG: list[ModelSpec] = list(BUILTIN)
+BY_ID: dict[str, ModelSpec] = {}
+
+
+def _fake_spec() -> ModelSpec | None:
+    # A deterministic stand-in for tests and CI (basal/adapters/fake_adapter.py): never shown otherwise.
+    if __import__("os").environ.get("BASAL_FAKE_MODEL") != "1":
+        return None
+    return ModelSpec(
         id="fake-decider", name="Fake Decider", maker="Bud Decision Studio tests", adapter="fake",
         repo=Repo("basal-tests/fake-decider"), params="0", memory_gb=0.0, speed="instant",
         tagline="Deterministic answers for tests.", summary="Probabilities come from a hash of the input; loads instantly.",
         languages="Any", modalities=("text", "image", "audio", "video"), max_options=1000, max_questions=256,
-        context_tokens=100000, license="Apache-2.0"))
+        context_tokens=100000, license="Apache-2.0")
 
-# Models fine-tuned on this computer (basal/training), listed after the model each was trained from.
-try:
-    from .finetunes import derived_specs as _derived
-    CATALOG.extend(_derived(CATALOG))
-except Exception as _e:  # noqa: BLE001 - a damaged fine-tune folder must never stop the studio from starting
-    print(f"fine-tunes not listed: {_e}")
 
-BY_ID = {m.id: m for m in CATALOG}
+def rebuild() -> None:
+    """Rebuild CATALOG from built-ins + local custom models + fine-tunes."""
+    rows: list[ModelSpec] = list(BUILTIN)
+    fake = _fake_spec()
+    if fake is not None:
+        rows.append(fake)
+    try:
+        from .custom_models import derived_specs as _customs
+        rows.extend(_customs(BUILTIN))
+    except Exception as _e:  # noqa: BLE001
+        print(f"custom models not listed: {_e}")
+    try:
+        from .finetunes import derived_specs as _derived
+        rows.extend(_derived(rows))
+    except Exception as _e:  # noqa: BLE001 - a damaged fine-tune folder must never stop the studio from starting
+        print(f"fine-tunes not listed: {_e}")
+    CATALOG[:] = rows
+    BY_ID.clear()
+    BY_ID.update({m.id: m for m in CATALOG})
+
+
+rebuild()

@@ -14,8 +14,8 @@ const invoke = (cmd, args) => T.core.invoke(cmd, args);
 const msg = (e) => String(e?.message ?? e);
 
 const OS = { linux: 'Linux', macos: 'macOS', windows: 'Windows' };
-const ARCH = { x86_64: 'Intel or AMD 64-bit', aarch64: 'ARM 64-bit' };
-const KIND = { nvidia: 'NVIDIA GPU', apple: 'Apple GPU', intel: 'Intel GPU', amd: 'AMD GPU', cpu: 'Processor' };
+const ARCH = { x86_64: 'Intel 或 AMD 64 位', aarch64: 'ARM 64 位' };
+const KIND = { nvidia: 'NVIDIA GPU', apple: 'Apple GPU', intel: 'Intel GPU', amd: 'AMD GPU', cpu: '处理器' };
 
 const S = { step: 'welcome', info: null, hw: null, hwError: null, device: null, log: [], progress: 0, stepId: null, stepsSeen: [], error: null, result: null, started: 0 };
 const again = new URLSearchParams(location.search).get('setup') === 'again';
@@ -23,7 +23,7 @@ const again = new URLSearchParams(location.search).get('setup') === 'again';
 // ------------------------------------------------------------------ start
 (async function start() {
   S.info = await invoke('app_info');
-  $('#version').textContent = `Version ${S.info.version}`;
+  $('#version').textContent = `版本 ${S.info.version}`;
   if (S.info.installed && !again) return launch();
   $('#setup').hidden = false;
   go('welcome');
@@ -40,18 +40,18 @@ const again = new URLSearchParams(location.search).get('setup') === 'again';
 
 async function launch() {
   $('#splash').hidden = false;
-  $('#splashmsg').textContent = 'Starting the engine';
+  $('#splashmsg').textContent = '正在启动引擎';
   try { await invoke('start_studio'); } catch (e) { splashError(msg(e)); }
 }
 
 function splashError(msg) {
   const [head, ...rest] = msg.split('\n\n');
   $('#splash .bar').hidden = true;
-  $('#splashmsg').textContent = `${head} Try again, or run setup again to repair the engine.`;
+  $('#splashmsg').textContent = `${head} 请重试，或重新运行安装程序以修复引擎。`;
   const box = $('#splasherr');
   box.hidden = false;
   box.innerHTML = `${rest.length ? `<pre>${esc(rest.join('\n\n'))}</pre>` : ''}
-    <div class="acts">${rest.length ? '<button class="btn" id="copyerr">Copy details</button>' : ''}<button class="btn" id="resetup">Run setup again</button><button class="btn btn-primary" id="retry">Try again</button></div>`;
+    <div class="acts">${rest.length ? '<button class="btn" id="copyerr">复制详情</button>' : ''}<button class="btn" id="resetup">重新运行安装</button><button class="btn btn-primary" id="retry">重试</button></div>`;
   $('#copyerr')?.addEventListener('click', () => navigator.clipboard?.writeText(msg));
   $('#retry').onclick = () => { box.hidden = true; $('#splash .bar').hidden = false; launch(); };
   $('#resetup').onclick = () => { location.search = '?setup=again'; };
@@ -71,7 +71,7 @@ function go(step) {
   $('#body').firstElementChild?.classList.add('fade');
 }
 
-function foot({ note = '', back = null, next = null, nextLabel = 'Continue', nextDisabled = false }) {
+function foot({ note = '', back = null, next = null, nextLabel = '继续', nextDisabled = false }) {
   $('#footnote').innerHTML = note;
   const b = $('#back'), n = $('#next');
   b.hidden = !back; b.onclick = back;
@@ -84,39 +84,39 @@ function welcome() {
   const rows = !hw && !S.hwError
     ? [1, 2, 3].map(() => `<div class="row"><span class="ic"></span><span class="t"><span class="skel" style="width:40%"></span><span class="skel" style="width:62%;margin-top:7px"></span></span></div>`).join('')
     : hw ? [
-      `<div class="row"><span class="ic">${icon('desktop')}</span><span class="t"><b>This computer</b><span>${esc(OS[hw.os] || hw.os)}, ${esc(ARCH[hw.arch] || hw.arch)}${hw.memory_gb ? `, ${Math.round(hw.memory_gb)} GB memory` : ''}</span></span></div>`,
+      `<div class="row"><span class="ic">${icon('desktop')}</span><span class="t"><b>本机</b><span>${esc(OS[hw.os] || hw.os)}，${esc(ARCH[hw.arch] || hw.arch)}${hw.memory_gb ? `，${Math.round(hw.memory_gb)} GB 内存` : ''}</span></span></div>`,
       ...hw.accelerators.map((a) => `<div class="row"><span class="ic ${a.kind !== 'cpu' ? 'gpu' : ''}">${icon(a.kind === 'cpu' ? 'cpu' : 'lightning')}</span>
-        <span class="t"><b>${esc(a.name)}</b><span>${esc(kindLine(a))}</span></span>${a.experimental ? '<span class="chip orange">Experimental</span>' : ''}</div>`),
-      `<div class="row"><span class="ic">${icon('hard-drives')}</span><span class="t"><b>Free disk space</b><span>Models take 1 to 24 GB each; the engine about ${planFor(hw.recommended)?.download_gb ?? 3} GB</span></span><span class="v">${hw.disk_free_gb != null ? `${Math.round(hw.disk_free_gb)} GB` : ''}</span></div>`,
+        <span class="t"><b>${esc(a.name)}</b><span>${esc(kindLine(a))}</span></span>${a.experimental ? '<span class="chip orange">实验性</span>' : ''}</div>`),
+      `<div class="row"><span class="ic">${icon('hard-drives')}</span><span class="t"><b>可用磁盘空间</b><span>每个模型约 1–24 GB；引擎约 ${planFor(hw.recommended)?.download_gb ?? 3} GB</span></span><span class="v">${hw.disk_free_gb != null ? `${Math.round(hw.disk_free_gb)} GB` : ''}</span></div>`,
     ].join('') : '';
   $('#body').innerHTML = `<div>
-    <h1>${again ? 'Set up again' : 'Welcome to Bud Decision Studio'}</h1>
+    <h1>${again ? '重新设置' : '欢迎使用 Bud Decision Studio'}</h1>
     <p class="lede">${again
-      ? `Models currently run on ${esc(S.info.config?.device_name || 'this computer')}. Choose again to move them to another processor, or to repair the engine.`
-      : 'Run open decision models on this computer. Give a model a situation and a few questions, and it returns a probability for every answer, usually in milliseconds.'}</p>
-    <p class="lede" style="margin-top:8px">Setup checks this computer, installs the engine that runs the models, and then lets you pick which models to download. There is nothing else to install.</p>
-    ${S.info.can_move_to_applications ? `<div class="note move">${icon('arrow-square-out')}<span><b>Move to Applications first?</b> The app is running from ${/Volumes/.test(location.href) ? 'the disk image' : 'your downloads'}. Moving it keeps it in Launchpad and the Dock.</span><button class="btn" id="moveapp">Move to Applications</button></div>` : ''}
-    <div class="section-title">${hw ? 'Found on this computer' : S.hwError ? 'Checking this computer failed' : 'Checking this computer'}</div>
+      ? `模型当前在 ${esc(S.info.config?.device_name || '本机')} 上运行。可重新选择以换到其他处理器，或修复引擎。`
+      : '在本机运行开放的决策模型。给出情境和几个问题，即可得到每个答案的概率，通常在毫秒内完成。'}</p>
+    <p class="lede" style="margin-top:8px">安装程序会检测本机、安装运行模型所需的引擎，然后让你选择要下载的模型。无需安装其他软件。</p>
+    ${S.info.can_move_to_applications ? `<div class="note move">${icon('arrow-square-out')}<span><b>要先移到「应用程序」吗？</b>应用当前从${/Volumes/.test(location.href) ? '磁盘映像' : '下载文件夹'}运行。移到「应用程序」后可固定在启动台和程序坞。</span><button class="btn" id="moveapp">移到应用程序</button></div>` : ''}
+    <div class="section-title">${hw ? '在本机检测到' : S.hwError ? '检测本机失败' : '正在检测本机'}</div>
     ${S.hwError ? `<div class="note error">${icon('warning')}<span>${esc(S.hwError)}</span></div>` : `<div class="group">${rows}</div>`}
     ${(hw?.notes || []).map((n) => `<div class="note warn">${icon('warning')}<span>${esc(n)}</span></div>`).join('')}
   </div>`;
   $('#moveapp')?.addEventListener('click', async (e) => {
-    e.currentTarget.disabled = true; e.currentTarget.textContent = 'Moving';
+    e.currentTarget.disabled = true; e.currentTarget.textContent = '正在移动';
     try { await invoke('move_to_applications'); } catch (err) { e.currentTarget.textContent = msg(err); }
   });
   foot({
-    note: hw ? '' : S.hwError ? '' : 'Checking the processors and graphics',
+    note: hw ? '' : S.hwError ? '' : '正在检测处理器与显卡',
     next: S.hwError ? () => location.reload() : () => go('device'),
-    nextLabel: S.hwError ? 'Try again' : 'Continue',
+    nextLabel: S.hwError ? '重试' : '继续',
     nextDisabled: !hw && !S.hwError,
   });
 }
 
 function kindLine(a) {
-  const parts = [KIND[a.kind] || 'Processor'];
+  const parts = [KIND[a.kind] || '处理器'];
   if (a.kind === 'nvidia' && a.cuda) parts.push(`CUDA ${a.cuda}`);
-  if (a.kind === 'cpu' && a.cores) parts.push(`${a.cores} cores`);
-  if (a.memory_gb) parts.push(`${Math.round(a.memory_gb)} GB ${a.unified_memory ? 'shared ' : ''}memory`);
+  if (a.kind === 'cpu' && a.cores) parts.push(`${a.cores} 核`);
+  if (a.memory_gb) parts.push(`${Math.round(a.memory_gb)} GB ${a.unified_memory ? '共享' : ''}内存`);
   return parts.join(', ');
 }
 const planFor = (id) => S.hw?.plans?.[id];
@@ -125,37 +125,37 @@ const planFor = (id) => S.hw?.plans?.[id];
 function what(a) {
   const big = (a.memory_gb || 0) >= 30;
   switch (a.kind) {
-    case 'nvidia': return big ? 'Fastest. Runs every model, including Jev-Omni for images, audio and video.' : `Fastest. Runs every model that fits in its ${Math.round(a.memory_gb || 0)} GB.`;
-    case 'apple': return big ? 'Fast. Uses the Mac\'s GPU through Metal and runs every model, including Jev-Omni.' : 'Fast. Uses the Mac\'s GPU through Metal; the largest models need more memory than this Mac has.';
-    case 'intel': return 'Faster than the processor alone. Uses the Intel GPU through oneAPI.';
-    case 'amd': return 'Uses ROCm. Experimental: some models may not load.';
-    default: return 'Works on any computer. Small models answer in about a second; large models are slow, and Jev-Omni needs a GPU.';
+    case 'nvidia': return big ? '最快。可运行全部模型，含用于图像、音频与视频的 Jev-Omni。' : `最快。可运行适合其 ${Math.round(a.memory_gb || 0)} GB 显存内的全部模型。`;
+    case 'apple': return big ? '很快。通过 Metal 使用 Mac GPU，可运行全部模型，含 Jev-Omni。' : '很快。通过 Metal 使用 Mac GPU；最大模型所需内存超过本 Mac 配置。';
+    case 'intel': return '比仅用处理器更快。通过 oneAPI 使用 Intel GPU。';
+    case 'amd': return '使用 ROCm。实验性：部分模型可能无法加载。';
+    default: return '适用于任何电脑。小模型约一秒出结果；大模型较慢，Jev-Omni 需要 GPU。';
   }
 }
 
-const WHERE = { nvidia: 'NVIDIA GPU', apple: 'Apple GPU', intel: 'Intel GPU', amd: 'AMD GPU', cpu: 'Processor only' };
+const WHERE = { nvidia: 'NVIDIA GPU', apple: 'Apple GPU', intel: 'Intel GPU', amd: 'AMD GPU', cpu: '仅处理器' };
 function hardwareLine(a) {
   const parts = [a.name];
   if (a.kind === 'nvidia' && a.cuda) parts.push(`CUDA ${a.cuda}`);
-  if (a.kind === 'cpu' && a.cores) parts.push(`${a.cores} cores`);
-  if (a.memory_gb) parts.push(`${Math.round(a.memory_gb)} GB ${a.unified_memory ? 'shared ' : ''}memory`);
+  if (a.kind === 'cpu' && a.cores) parts.push(`${a.cores} 核`);
+  if (a.memory_gb) parts.push(`${Math.round(a.memory_gb)} GB ${a.unified_memory ? '共享' : ''}内存`);
   return parts.join(', ');
 }
 
 function device() {
   const hw = S.hw;
   $('#body').innerHTML = `<div>
-    <h1>Where should models run?</h1>
-    <p class="lede">A GPU answers much faster. The processor works everywhere and is fine for the small models. Setup installs the engine built for your choice; you can change it later by running setup again.</p>
-    <div class="choices" role="radiogroup" aria-label="Where models run">
+    <h1>模型应在哪里运行？</h1>
+    <p class="lede">GPU 响应快得多。处理器随处可用，适合小模型。安装程序会按你的选择安装对应引擎；之后可重新运行安装以更改。</p>
+    <div class="choices" role="radiogroup" aria-label="模型运行位置">
       ${hw.accelerators.map((a) => {
         const p = planFor(a.id) || {};
         return `<button class="choice" role="radio" aria-checked="${a.id === S.device}" data-id="${a.id}" ${p.error ? 'disabled' : ''}>
           <span class="radio"></span><span class="ic ${a.kind !== 'cpu' ? 'gpu' : ''}">${icon(a.kind === 'cpu' ? 'cpu' : 'lightning')}</span>
-          <span><span class="name">${WHERE[a.kind] || 'GPU'}${a.id === hw.recommended ? '<span class="chip violet">Recommended</span>' : ''}${a.experimental ? '<span class="chip orange">Experimental</span>' : ''}</span>
+          <span><span class="name">${WHERE[a.kind] || 'GPU'}${a.id === hw.recommended ? '<span class="chip violet">推荐</span>' : ''}${a.experimental ? '<span class="chip orange">实验性</span>' : ''}</span>
             <span class="kind">${esc(hardwareLine(a))}</span>
             <span class="what">${esc(what(a))}</span>
-            <span class="size">${p.error ? esc(p.error) : `Installs ${esc(p.torch_label)} and the model libraries, about ${p.download_gb} GB.`}</span></span></button>`;
+            <span class="size">${p.error ? esc(p.error) : `将安装 ${esc(p.torch_label)} 与模型库，约 ${p.download_gb} GB。`}</span></span></button>`;
       }).join('')}
     </div>
   </div>`;
@@ -170,15 +170,15 @@ function device() {
     };
   });
   const free = hw.disk_free_gb;
-  foot({ note: free != null ? `${Math.round(free)} GB free on this computer` : '', back: () => go('welcome'), next: () => runInstall(), nextLabel: 'Install' });
+  foot({ note: free != null ? `本机可用 ${Math.round(free)} GB` : '', back: () => go('welcome'), next: () => runInstall(), nextLabel: '安装' });
 }
 
 // ------------------------------------------------------------------ 3. install
-const STEPS = [['python', 'Prepare Python'], ['torch', 'Install PyTorch'], ['libs', 'Install the model libraries'], ['models', 'Install the model packages'], ['verify', 'Check the device']];
+const STEPS = [['python', '准备 Python'], ['torch', '安装 PyTorch'], ['libs', '安装模型库'], ['models', '安装模型包'], ['verify', '检查设备']];
 let unlisten = null, ticker = null;
 
 async function runInstall() {
-  Object.assign(S, { log: [], progress: 0, stepId: 'python', stepsSeen: [], error: null, result: null, started: Date.now(), label: 'Preparing' });
+  Object.assign(S, { log: [], progress: 0, stepId: 'python', stepsSeen: [], error: null, result: null, started: Date.now(), label: '准备中' });
   go('install');
   unlisten ??= await T.event.listen('install', (e) => onEvent(e.payload));
   clearInterval(ticker); ticker = setInterval(() => { if (S.step === 'install' && !S.error) $('#elapsed') && ($('#elapsed').textContent = elapsed()); }, 1000);
@@ -203,17 +203,17 @@ const elapsed = () => { const s = Math.round((Date.now() - S.started) / 1000); r
 function install() {
   const p = planFor(S.device) || {};
   $('#body').innerHTML = `<div>
-    <h1>${S.error ? 'Setup did not finish' : 'Installing the engine'}</h1>
-    <p class="lede">${S.error ? 'Nothing was changed outside the app\'s own folder. Check the details below, then try again.' : `Downloading ${esc(p.torch_label || 'PyTorch')} and the model libraries, about ${p.download_gb || 3} GB. This takes a few minutes on a fast connection; you can leave it running.`}</p>
+    <h1>${S.error ? '安装未完成' : '正在安装引擎'}</h1>
+    <p class="lede">${S.error ? '应用目录外未做任何更改。请查看下方详情后重试。' : `正在下载 ${esc(p.torch_label || 'PyTorch')} 与模型库，约 ${p.download_gb || 3} GB。网速快时约需数分钟，可保持窗口打开。`}</p>
     <div class="progress-head"><b id="plabel"></b><span id="elapsed">${elapsed()}</span></div>
     <span class="bar ${S.error ? 'failed' : 'working'}" id="pbar"><i></i></span>
     <ul class="checklist" id="checks"></ul>
     ${S.error ? `<div class="note error">${icon('warning')}<span>${esc(S.error)}</span></div>` : ''}
-    <details class="log" ${S.error ? 'open' : ''}><summary>Details</summary><pre id="log"></pre></details>
+    <details class="log" ${S.error ? 'open' : ''}><summary>详情</summary><pre id="log"></pre></details>
   </div>`;
   foot(S.error
-    ? { back: () => go('device'), next: () => runInstall(), nextLabel: 'Try again', note: `<button class="btn" id="copylog">${icon('copy')}Copy details</button>` }
-    : { note: 'Keep the app open until setup finishes.' });
+    ? { back: () => go('device'), next: () => runInstall(), nextLabel: '重试', note: `<button class="btn" id="copylog">${icon('copy')}复制详情</button>` }
+    : { note: '请保持应用打开直至安装完成。' });
   // The log already ends with the error when the installer reported it; add it only when it came from elsewhere.
   $('#copylog')?.addEventListener('click', () => navigator.clipboard?.writeText([...S.log, ...(S.log.at(-1) === S.error ? [] : [S.error])].join('\n')));
   paintInstall();
@@ -221,7 +221,7 @@ function install() {
 
 function paintInstall() {
   const at = STEPS.findIndex(([id]) => id === S.stepId);
-  $('#plabel').textContent = S.error ? 'Stopped' : S.label || 'Preparing';
+  $('#plabel').textContent = S.error ? '已停止' : S.label || '准备中';
   $('#pbar i').style.width = `${Math.max(3, Math.round(S.progress * 100))}%`;
   $('#checks').innerHTML = STEPS.map(([id, label], i) => `<li class="${i < at ? 'done' : i === at ? (S.error ? 'failed' : 'active') : ''}"><span class="mark"></span>${label}</li>`).join('');
   const log = $('#log');
@@ -237,21 +237,21 @@ function ready() {
   const c = S.result || {};
   $('#body').innerHTML = `<div>
     <div class="done-mark" aria-hidden="true"></div>
-    <h1>Bud Decision Studio is ready</h1>
-    <p class="lede">Installed in ${elapsed()}.</p>
-    <div class="section-title">Set up for</div>
+    <h1>Bud Decision Studio 已就绪</h1>
+    <p class="lede">安装耗时 ${elapsed()}。</p>
+    <div class="section-title">已配置为</div>
     <div class="group">
-      <div class="row"><span class="ic ${c.device !== 'cpu' ? 'gpu' : ''}">${icon(c.device === 'cpu' ? 'cpu' : 'lightning')}</span><span class="t"><b>Models run on ${esc(c.device_name)}</b><span>${c.device === 'cpu' ? 'The processor' : 'The GPU'}, with PyTorch ${esc(c.torch)}</span></span></div>
+      <div class="row"><span class="ic ${c.device !== 'cpu' ? 'gpu' : ''}">${icon(c.device === 'cpu' ? 'cpu' : 'lightning')}</span><span class="t"><b>模型运行于 ${esc(c.device_name)}</b><span>${c.device === 'cpu' ? '处理器' : 'GPU'}，PyTorch ${esc(c.torch)}</span></span></div>
     </div>
-    <div class="next-up"><span class="ic">${icon('cloud-arrow-down')}</span><span><b>Next, choose your models</b>
-      <p>The studio opens with a short list of models picked for this computer. Tick the ones you want; they download one at a time in the background while you explore.</p></span></div>
+    <div class="next-up"><span class="ic">${icon('cloud-arrow-down')}</span><span><b>接下来，选择模型</b>
+      <p>打开工作室后会显示为本机挑选的短列表。勾选你想要的模型；它们会在后台依次下载，你可同时探索其他功能。</p></span></div>
   </div>`;
-  foot({ next: openStudio, nextLabel: 'Open Bud Decision Studio' });
+  foot({ next: openStudio, nextLabel: '打开 Bud Decision Studio' });
 }
 
 async function openStudio() {
   const n = $('#next');
-  n.disabled = true; n.textContent = 'Starting';
+  n.disabled = true; n.textContent = '正在启动';
   try { await invoke('start_studio'); } catch (e) {
     $('#setup').hidden = true; $('#splash').hidden = false; splashError(msg(e));
   }
@@ -286,17 +286,17 @@ function mockTauri() {
         if (cmd === 'install_engine') {
           const emit = (ev) => listeners.forEach((f) => f({ payload: ev }));
           const p = hw.plans[args.device];
-          const steps = [['python', 'Preparing Python 3.12', 0], ['torch', `Installing ${p.torch_label}`, 0.05], ['libs', 'Installing the model libraries', 0.6], ['models', 'Installing the model packages', 0.88], ['verify', `Checking ${hw.accelerators.find((a) => a.id === args.device).name}`, 0.95]];
+          const steps = [['python', '准备 Python 3.12', 0], ['torch', `正在安装 ${p.torch_label}`, 0.05], ['libs', '正在安装模型库', 0.6], ['models', '正在安装模型包', 0.88], ['verify', `正在检查 ${hw.accelerators.find((a) => a.id === args.device).name}`, 0.95]];
           const stopAt = q.get('stop');
           for (const [id, label, progress] of steps) {
             emit({ type: 'step', id, label, progress });
             for (let k = 0; k < 4; k++) { emit({ type: 'log', line: `Resolved ${12 + k} packages in ${40 + k * 7}ms` }); await sleep(+(q.get('speed') || 350)); }
-            if (stopAt === id) throw new Error(q.get('fail') || { python: 'Could not create the Python environment.', torch: 'PyTorch could not be installed. Check the internet connection and try again.', libs: 'The model libraries could not be installed.', models: 'The model packages could not be installed.', verify: 'The device could not be used.' }[id]);
+            if (stopAt === id) throw new Error(q.get('fail') || { python: '无法创建 Python 环境。', torch: '无法安装 PyTorch。请检查网络后重试。', libs: '无法安装模型库。', models: '无法安装模型包。', verify: '无法使用该设备。' }[id]);
           }
           const a = hw.accelerators.find((x) => x.id === args.device);
           return { device: args.device === 'rocm' ? 'cuda' : args.device, device_name: a.name, torch: '2.11.0' };
         }
-        if (cmd === 'start_studio') { await sleep(1200); if (q.get('startfail')) throw new Error('The studio did not start.\n\nTraceback (most recent call last):\n  ...\nModuleNotFoundError: No module named \'torch\''); return 'http://127.0.0.1:8420/'; }
+        if (cmd === 'start_studio') { await sleep(1200); if (q.get('startfail')) throw new Error('工作室未能启动。\n\nTraceback (most recent call last):\n  ...\nModuleNotFoundError: No module named \'torch\''); return 'http://127.0.0.1:8420/'; }
         return null;
       },
     },
