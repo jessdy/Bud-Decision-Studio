@@ -1,0 +1,17 @@
+# 仅用于重新构建 CUDA 镜像（源码机）：
+#   docker compose -f docker-compose.cuda.build.yml build
+#
+# 构建完成后导出：
+#   docker save bud-decision-studio:cuda -o bud-decision-studio-cuda.tar
+#   7z a bud-decision-studio-cuda.7z bud-decision-studio-cuda.tar
+#
+# 另一台机器启动请用 docker-compose.cuda.yml
+
+services:
+  studio:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        DEVICE: cuda
+    image: bud-decision-studio:cuda
