@@ -1,0 +1,33 @@
+# Bud Decision Studio
+#
+#   docker compose up --build
+#   open http://127.0.0.1:8420
+#
+# GPU（完整独立文件）:
+#   docker compose -f docker-compose.cuda.yml up --build
+
+services:
+  studio:
+    build:
+      context: .
+      args:
+        DEVICE: ${DEVICE:-cpu}
+    image: bud-decision-studio:${DEVICE:-cpu}
+    ports:
+      - "${BASAL_PORT:-8420}:8420"
+    environment:
+      BASAL_HOST: "0.0.0.0"
+      BASAL_PORT: "8420"
+      BASAL_DATA: /data
+      HF_HOME: /models
+      HF_HUB_CACHE: /models/hub
+      # Optional: require API key when exposing beyond localhost
+      # BASAL_API_KEY: change-me
+    volumes:
+      - bud-data:/data
+      - bud-models:/models
+    restart: unless-stopped
+
+volumes:
+  bud-data:
+  bud-models:

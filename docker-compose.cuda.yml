@@ -1,0 +1,53 @@
+# Bud Decision Studio — NVIDIA GPU
+#
+# 需要本机已安装 NVIDIA 驱动 + NVIDIA Container Toolkit。
+#
+#   docker compose -f docker-compose.cuda.yml up --build
+#   打开 http://127.0.0.1:8420
+#
+# 停止：
+#   docker compose -f docker-compose.cuda.yml down
+
+services:
+  studio:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        DEVICE: cuda
+    image: bud-decision-studio:cuda
+    container_name: bud-decision-studio-cuda
+    ports:
+      - "${BASAL_PORT:-8420}:8420"
+    environment:
+      BASAL_HOST: "0.0.0.0"
+      BASAL_PORT: "8420"
+      BASAL_DATA: /data
+      HF_HOME: /models
+      HF_HUB_CACHE: /models/hub
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+      # 对外暴露时建议设置 API Key：
+      # BASAL_API_KEY: change-me
+    volumes:
+      - bud-data-cuda:/data
+      - bud-models-cuda:/models
+    gpus: all
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8420/api/state', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+volumes:
+  bud-data-cuda:
+  bud-models-cuda:
