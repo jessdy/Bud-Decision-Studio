@@ -25,8 +25,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
     HF_HUB_CACHE=/models/hub \
     VENV=/opt/bud/.venv \
     PATH=/opt/bud/.venv/bin:/root/.local/bin:$PATH \
-    # Writable default config seed path (volume /data starts empty)
-    BUD_CONFIG_SEED=/opt/bud/config.json
+    # Seed config for empty /data volume (entrypoint copies this if needed)
+    BUD_CONFIG_SEED=/opt/bud/config.seed.json
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
@@ -49,10 +49,10 @@ COPY ui ./ui
 COPY installer ./installer
 COPY run.sh ./
 
-# Install into /opt/bud/.venv; write seed config to /opt/bud (not the empty volume mount).
+# Install into /opt/bud/.venv; keep a seed config outside the runtime /data volume.
 RUN DEVICE="$DEVICE" VENV="$VENV" BASAL_DATA=/opt/bud \
     bash docker/install.sh \
- && cp /opt/bud/config.json "$BUD_CONFIG_SEED"
+ && cp /opt/bud/config.json /opt/bud/config.seed.json
 
 VOLUME ["/data", "/models"]
 EXPOSE 8420
